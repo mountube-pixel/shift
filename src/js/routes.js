@@ -8,7 +8,7 @@ const HomePage = (props, { $f7, $h, $on }) => {
   return () => $h`
     <div class="page" data-name="home">
       
-      <!-- Navbar nascosta standard, usiamo header custom -->
+      <!-- Navbar -->
       <div class="navbar navbar-transparent text-color-white">
         <div class="navbar-bg"></div>
         <div class="navbar-inner">
@@ -17,7 +17,8 @@ const HomePage = (props, { $f7, $h, $on }) => {
               <i class="icon f7-icons">bars</i>
             </a>
           </div>
-          <div class="title" style="font-weight: 600;">VolontaApp</div>
+          <!-- Titolo Aggiornato -->
+          <div class="title" style="font-weight: 700; letter-spacing: 1px;">SHIFT</div>
           <div class="right">
             <a href="#" class="link icon-only">
               <i class="icon f7-icons">bell</i>
@@ -55,7 +56,7 @@ const HomePage = (props, { $f7, $h, $on }) => {
           </div>
         </div>
 
-        <!-- Card Statistiche (Galleggianti) -->
+        <!-- Card Statistiche -->
         <div class="row no-gap margin-horizontal" style="margin-top: -60px;">
           <div class="col-50">
             <div class="card soft-card margin-right-half text-align-center padding-vertical">
@@ -140,7 +141,7 @@ const HomePage = (props, { $f7, $h, $on }) => {
 
       </div>
       
-      <!-- Stili CSS locali per questa pagina -->
+      <!-- Stili CSS locali -->
       <style>
         .custom-header {
           background-color: var(--f7-theme-color);

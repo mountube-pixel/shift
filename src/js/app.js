@@ -12,12 +12,15 @@ import routes from './routes.js';
 
 // Inizializzazione App
 var app = new Framework7({
-  el: '#app', // L'elemento root nell'index.html
-  name: 'VolontaApp',
-  theme: 'ios', // Forziamo iOS per avere il look più pulito/Soft UI
+  el: '#app',
+  
+  // Nome App Aggiornato
+  name: 'SHIFT',
+  
+  theme: 'ios',
   darkMode: false,
   
-  // Store (Lo configureremo dopo)
+  // Store Globale
   store: {
     state: {
       user: { name: 'Alessandro', level: 3 }
@@ -26,6 +29,4 @@ var app = new Framework7({
 
   // Rotte
   routes: routes,
-  
-  // NOTA: Service Worker disabilitato temporaneamente per lo sviluppo
 });
