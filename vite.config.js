@@ -1,10 +1,6 @@
-
 import path from 'path';
 
 export default {
-  // Impostiamo la root dentro src se preferisci lavorare lì, 
-  // ma solitamente Vite si aspetta index.html nella root del progetto.
-  // Per semplicità standard Vite + F7:
   root: './', 
   build: {
     outDir: 'dist',
@@ -15,6 +11,6 @@ export default {
     },
   },
   server: {
-    host: true, // Espone l'IP per testare da cellulare nella stessa rete
+    host: true, 
   }
 };

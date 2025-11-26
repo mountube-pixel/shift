@@ -1,35 +1,70 @@
-
 import { createStore } from 'framework7';
 
 const store = createStore({
   state: {
-    products: [
-      {
-        id: '1',
-        title: 'Apple iPhone 8',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipisicing elit. Nisi tempora similique reiciendis, error nesciunt vero, blanditiis pariatur dolor, minima sed sapiente rerum, dolorem corrupti hic modi praesentium unde saepe perspiciatis.'
-      },
-      {
-        id: '2',
-        title: 'Apple iPhone 8 Plus',
-        description: 'Velit odit autem modi saepe ratione totam minus, aperiam, labore quia provident temporibus quasi est ut aliquid blanditiis beatae suscipit odio vel! Nostrum porro sunt sint eveniet maiores, dolorem itaque!'
-      },
-      {
-        id: '3',
-        title: 'Apple iPhone X',
-        description: 'Expedita sequi perferendis quod illum pariatur aliquam, alias laboriosam! Vero blanditiis placeat, mollitia necessitatibus reprehenderit. Labore dolores amet quos, accusamus earum asperiores officiis assumenda optio architecto quia neque, quae eum.'
-      },
-    ]
+    // Carichiamo lo stato iniziale dal LocalStorage se esiste
+    user: JSON.parse(localStorage.getItem('user')) || null,
+    token: localStorage.getItem('token') || null,
+    isLoading: false,
   },
   getters: {
-    products({ state }) {
-      return state.products;
+    user({ state }) {
+      return state.user;
+    },
+    token({ state }) {
+      return state.token;
+    },
+    isLoggedIn({ state }) {
+      return !!state.user && !!state.token;
+    },
+    isLoading({ state }) {
+      return state.isLoading;
     }
   },
   actions: {
-    addProduct({ state }, product) {
-      state.products = [...state.products, product];
+    async login({ state }, { email, password }) {
+      state.isLoading = true;
+      
+      try {
+        // Sostituisci con il tuo URL REALE di Hostinger
+        const response = await fetch('https://shift.appap.it/api/v1/auth/login.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.message || 'Errore durante il login');
+        }
+
+        // Salva nello stato
+        state.user = data.user;
+        state.token = data.token; // Se il backend non manda token, usa una stringa placeholder
+
+        // Persistenza nel LocalStorage
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('token', data.token);
+
+        state.isLoading = false;
+        return true; // Successo
+
+      } catch (error) {
+        state.isLoading = false;
+        throw error; // Rilancia l'errore alla UI per mostrarlo
+      }
     },
+    logout({ state }) {
+      state.user = null;
+      state.token = null;
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      // Qui potresti forzare un reload o redirect
+    }
   },
-})
+});
+
 export default store;

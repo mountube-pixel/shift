@@ -1,32 +1,23 @@
+import $ from 'dom7';
 import Framework7 from 'framework7/bundle';
-
-// Importa stili Framework7
 import 'framework7/css/bundle';
-import 'framework7-icons/css/framework7-icons.css';
-
-// Importa il tuo CSS personalizzato
+import '../css/icons.css';
 import '../css/app.css';
 
-// Importa le Rotte
 import routes from './routes.js';
+import store from './store.js';
 
-// Inizializzazione App
+// --- MODIFICA QUI ---
+// Invece di import App from '../app.f7';
+import App from './app-component.js'; 
+// --------------------
+
 var app = new Framework7({
-  el: '#app',
-  
-  // Nome App Aggiornato
   name: 'SHIFT',
-  
-  theme: 'ios',
-  darkMode: false,
-  
-  // Store Globale
-  store: {
-    state: {
-      user: { name: 'Alessandro', level: 3 }
-    }
-  },
-
-  // Rotte
+  theme: 'auto',
+  el: '#app',
+  component: App, // Ora carica il componente JS puro
+  store: store,
   routes: routes,
+  // serviceWorker commentato come da step precedenti
 });
