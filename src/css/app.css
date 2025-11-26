@@ -1,0 +1,91 @@
+/* Import Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* Design System Colors */
+  --f7-theme-color: #00897B; /* Teal - Brand Primary */
+  --f7-theme-color-rgb: 0, 137, 123;
+  --f7-theme-color-shade: #00695C;
+  --f7-theme-color-tint: #4DB6AC;
+  
+  --app-yellow: #FFC107; /* Action Color */
+  --app-bg: #F7F9FC;     /* Ultra light gray background */
+  --app-text: #2c3e50;
+  
+  /* Typography */
+  --f7-font-family: 'Poppins', -apple-system, system-ui, sans-serif;
+  
+  /* Global Shapes */
+  --f7-card-border-radius: 20px;
+  --f7-button-border-radius: 12px;
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--app-bg);
+  color: var(--app-text);
+}
+
+.page-content {
+  background-color: var(--app-bg) !important;
+}
+
+/* SOFT UI CARDS */
+.card {
+  background: #ffffff;
+  border-radius: var(--f7-card-border-radius);
+  box-shadow: 0 10px 30px -10px rgba(0, 137, 123, 0.08); /* Ombra morbida colorata */
+  border: none;
+  margin: 16px;
+}
+
+.card-header, .card-footer {
+  font-weight: 600;
+  color: var(--app-text);
+}
+
+/* FLOATING BOTTOM NAVBAR */
+.toolbar-bottom.floating-navbar {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  margin: 0 16px 20px 16px; /* Staccata dal fondo */
+  border-radius: 24px;
+  width: calc(100% - 32px);
+  box-shadow: 0 10px 40px -10px rgba(0,0,0,0.15);
+  border-top: none !important;
+}
+
+.toolbar-bottom .tab-link-active {
+  color: var(--f7-theme-color);
+  background: rgba(0, 137, 123, 0.1);
+  border-radius: 12px;
+}
+
+/* BUTTONS */
+.button-primary-action {
+  background-color: var(--app-yellow);
+  color: #37474F; /* Dark text for contrast on yellow */
+  font-weight: 700;
+  box-shadow: 0 8px 20px -5px rgba(255, 193, 7, 0.4);
+  height: 56px;
+  font-size: 18px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.button-primary-action:active {
+  transform: scale(0.98);
+  background-color: #FFB300;
+}
+
+/* UTILS */
+.text-gradient {
+  background: linear-gradient(135deg, #00897B 0%, #4DB6AC 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700;
+}

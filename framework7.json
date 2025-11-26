@@ -1,0 +1,19 @@
+{
+  "cwd": "C:\\Users\\info\\Documents\\SHIFT",
+  "type": [
+    "pwa",
+    "web"
+  ],
+  "name": "SHIFT",
+  "framework": "core",
+  "template": "single-view",
+  "bundler": "vite",
+  "cssPreProcessor": false,
+  "theming": {
+    "customColor": true,
+    "color": "#FFB300",
+    "darkMode": false,
+    "iconFonts": true
+  },
+  "customBuild": false
+}
