@@ -1,61 +1,10 @@
 // src/js/app-component.js
+import store from './store.js';
+
 export default (props, { $f7, $h, $update }) => {
-  // Stato locale
-  let username = '';
-  let password = '';
-
-  // Funzioni
-  const updateUsername = (e) => {
-    username = e.target.value;
-    $update();
-  };
-
-  const updatePassword = (e) => {
-    password = e.target.value;
-    $update();
-  };
-
-  const alertLoginData = () => {
-    $f7.dialog.alert('Username: ' + username + '<br/>Password: ' + password, () => {
-      $f7.loginScreen.close();
-    });
-  };
-
-  // Funzione di Render (usa i template literal di JS)
+  
   return () => $h`
     <div id="app">
-
-      <div class="panel panel-left panel-cover dark panel-init">
-        <div class="view">
-          <div class="page">
-            <div class="navbar">
-              <div class="navbar-bg"></div>
-              <div class="navbar-inner">
-                <div class="title">Left Panel</div>
-              </div>
-            </div>
-            <div class="page-content">
-              <div class="block">Left panel content goes here</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="panel panel-right panel-reveal dark">
-        <div class="view">
-          <div class="page">
-            <div class="navbar">
-              <div class="navbar-bg"></div>
-              <div class="navbar-inner">
-                <div class="title">Right Panel</div>
-              </div>
-            </div>
-            <div class="page-content">
-              <div class="block">Right panel content goes here</div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div class="view view-main view-init safe-areas" data-url="/"></div>
 
@@ -66,56 +15,16 @@ export default (props, { $f7, $h, $update }) => {
               <div class="navbar-bg"></div>
               <div class="navbar-inner">
                 <div class="title">Popup</div>
-                <div class="right">
-                  <a href="#" class="link popup-close">Close</a>
-                </div>
+                <div class="right"><a href="#" class="link popup-close">Chiudi</a></div>
               </div>
             </div>
-            <div class="page-content">
-              <div class="block">
-                <p>Popup content goes here.</p>
-              </div>
-            </div>
+            <div class="page-content"><div class="block">Contenuto Popup.</div></div>
           </div>
         </div>
       </div>
 
       <div class="login-screen" id="my-login-screen">
-        <div class="view">
-          <div class="page">
-            <div class="page-content login-screen-content">
-              <div class="login-screen-title">Login</div>
-              <div class="list">
-                <ul>
-                  <li class="item-content item-input">
-                    <div class="item-inner">
-                      <div class="item-title item-label">Username</div>
-                      <div class="item-input-wrap">
-                        <input type="text" name="username" placeholder="Your username" value="${username}" @input="${updateUsername}"/>
-                      </div>
-                    </div>
-                  </li>
-                  <li class="item-content item-input">
-                    <div class="item-inner">
-                      <div class="item-title item-label">Password</div>
-                      <div class="item-input-wrap">
-                        <input type="password" name="password" placeholder="Your password" value="${password}" @input="${updatePassword}"/>
-                      </div>
-                    </div>
-                  </li>
-                </ul>
-              </div>
-              <div class="list">
-                <ul>
-                  <li>
-                    <a href="#" class="item-link list-button login-button" @click="${alertLoginData}">Sign In</a>
-                  </li>
-                </ul>
-                <div class="block-footer">Some text about login information.<br/>Click "Sign In" to close Login Screen</div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <div class="view"><div class="page"></div></div>
       </div>
 
     </div>

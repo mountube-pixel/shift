@@ -43,7 +43,7 @@ const store = createStore({
 
         // Salva nello stato
         state.user = data.user;
-        state.token = data.token; // Se il backend non manda token, usa una stringa placeholder
+        state.token = data.token;
 
         // Persistenza nel LocalStorage
         localStorage.setItem('user', JSON.stringify(data.user));
@@ -58,13 +58,20 @@ const store = createStore({
       }
     },
     logout({ state }) {
+      // 1. Pulisci lo stato
       state.user = null;
       state.token = null;
+      
+      // 2. Pulisci il LocalStorage
       localStorage.removeItem('user');
       localStorage.removeItem('token');
-      // Qui potresti forzare un reload o redirect
+      
+      // 3. Opzionale: Pulisci tutta la cache per sicurezza
+      localStorage.clear(); 
+      
+      console.log("Logout effettuato");
     }
-  },
-});
+  } // <--- QUESTA parentesi mancava! (Chiude "actions")
+}); // <--- Questa chiude "createStore"
 
 export default store;

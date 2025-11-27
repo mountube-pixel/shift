@@ -1,23 +1,56 @@
+// src/pages/login.js
 import store from '../js/store.js';
 
 export default (props, { $f7, $h, $update }) => {
+  // Stato locale per i campi input
   let email = '';
   let password = '';
+  
+  // Recuperiamo lo stato di caricamento dallo store
   const isLoading = store.getters.isLoading;
 
+  // Funzione di Login
   const signIn = async () => {
+    // Validazione base
     if (!email || !password) {
-      $f7.toast.create({ text: 'Inserisci dati validi', closeTimeout: 2000, cssClass: 'color-red' }).open();
+      $f7.toast.create({ 
+        text: 'Inserisci email e password', 
+        closeTimeout: 2000, 
+        cssClass: 'color-red',
+        position: 'center'
+      }).open();
       return;
     }
+
     try {
+      // 1. Chiamata all'azione dello store (che fa la fetch API)
       await store.dispatch('login', { email, password });
-      $f7.views.main.router.navigate('/', { reloadAll: true });
+      
+      $f7.toast.create({
+          text: 'Accesso effettuato!',
+          position: 'bottom',
+          closeTimeout: 1500,
+          cssClass: 'color-green'
+      }).open();
+
+      // 2. LOGICA DI REINDIRIZZAMENTO BASATA SUL RUOLO
+      const user = store.getters.user.value;
+      
+      if (user && user.role === 'super_admin') {
+          // Se è Super Admin -> Vai alla Dashboard Desktop
+          $f7.views.main.router.navigate('/admin/', { reloadAll: true });
+      } else {
+          // Se è Volontario/Altro -> Vai alla App Mobile
+          $f7.views.main.router.navigate('/', { reloadAll: true });
+      }
+
     } catch (err) {
-      $f7.dialog.alert(err.message || 'Errore', 'Login Fallito');
+      // Gestione errori (es. password errata)
+      $f7.dialog.alert(err.message || 'Errore di connessione', 'Login Fallito');
     }
   };
 
+  // Render del componente
   return () => $h`
     <div class="page no-navbar no-toolbar no-swipeback login-page-custom">
       
@@ -46,6 +79,7 @@ export default (props, { $f7, $h, $update }) => {
 
           <div class="list no-hairlines-md no-margin-vertical">
             <ul class="no-border padding-0">
+              
               <li class="item-content item-input no-padding margin-bottom">
                 <div class="item-inner no-padding">
                   <div class="item-input-wrap soft-input-wrap display-flex align-items-center padding-horizontal">
@@ -54,6 +88,7 @@ export default (props, { $f7, $h, $update }) => {
                   </div>
                 </div>
               </li>
+
               <li class="item-content item-input no-padding margin-bottom-double">
                 <div class="item-inner no-padding">
                    <div class="item-input-wrap soft-input-wrap display-flex align-items-center padding-horizontal">
@@ -62,27 +97,26 @@ export default (props, { $f7, $h, $update }) => {
                   </div>
                 </div>
               </li>
+
             </ul>
           </div>
 
           <div class="block no-margin padding-0">
             <button class="button button-fill button-large button-round color-teal shadow-teal ${isLoading.value ? 'disabled' : ''}" @click="${signIn}" style="height: 50px; font-weight: 700;">
-              ${isLoading.value ? 'ATTENDI...' : 'ACCEDI'}
+              ${isLoading.value ? 'VERIFICA...' : 'ACCEDI'}
             </button>
           </div>
-        </div>
 
-        <div class="block text-align-center margin-top">
-            <a href="#" class="link text-color-gray size-13" @click="${() => $f7.dialog.alert('Info', 'Reset')}">Password dimenticata?</a>
+        </div> <div class="block text-align-center margin-top">
+            <a href="#" class="link text-color-gray size-13" @click="${() => $f7.dialog.alert('Contatta la tua associazione.', 'Recupero')}">Password dimenticata?</a>
         </div>
         
       </div>
 
       <style>
-        /* CSS BLINDATO CON !IMPORTANT */
+        /* Override per garantire lo stile corretto */
         .login-page-custom { background-color: #f7f8fa !important; }
         
-        /* Forza il contenuto ad essere trasparente per mostrare lo sfondo */
         .login-content-wrapper { 
           background: transparent !important; 
           z-index: 10 !important;
@@ -97,14 +131,21 @@ export default (props, { $f7, $h, $update }) => {
           pointer-events: none;
         }
 
+        .main-icon-container {
+          width: 80px; height: 80px; background: #fff; border-radius: 28px;
+          margin: 0 auto 15px; display: flex; align-items: center; justify-content: center;
+          border: 3px solid #FFED99;
+        }
+
         .soft-input-wrap {
           background: #f4f5f7;
           border-radius: 12px;
           height: 48px;
           border: 1px solid transparent;
+          transition: all 0.3s;
         }
         .soft-input-wrap input { font-weight: 600; font-size: 15px; }
-        .item-input-focused .soft-input-wrap { background: #fff; border-color: var(--f7-theme-color); }
+        .item-input-focused .soft-input-wrap { background: #fff; border-color: var(--f7-theme-color); box-shadow: 0 4px 12px rgba(0, 137, 123, 0.1); }
         
         .shadow-soft { box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important; }
         .shadow-teal { box-shadow: 0 4px 12px rgba(0, 137, 123, 0.3) !important; }
