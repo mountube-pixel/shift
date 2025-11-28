@@ -1,3 +1,4 @@
+// src/js/locales/it.js
 export default {
   translation: {
     common: {
@@ -49,7 +50,54 @@ export default {
         role_super_admin: "Super User",
         status_active: "Attivo",
         status_suspended: "Sospeso",
-        btn_add: "Nuovo Utente"
+        btn_add: "Nuovo Utente",
+        
+        // Form spostato DENTRO users
+        form: {
+            title_new: "Nuovo Utente",
+            first_name: "Nome",
+            last_name: "Cognome",
+            city: "Città",
+            province: "Provincia (Sigla)",
+            role_select: "Seleziona Ruolo",
+            password_placeholder: "Password provvisoria",
+            save: "Salva Utente"
+        }
+    }, // <--- QUESTA VIRGOLA È FONDAMENTALE
+    orgs: {
+        title: "Gestione Associazioni",
+        btn_add: "Nuova Associazione",
+        table_name: "Ente",
+        table_plan: "Piano",
+        table_stats: "Statistiche",
+        table_status: "Stato",
+        form: {
+            title_new: "Registra Ente",
+            tab_info: "Dati Ente",
+            tab_details: "Dettagli & Web", // Aggiornato
+            tab_admin: "Primo Amministratore",
+            
+            name: "Ragione Sociale",
+            vat: "P.IVA / C.F.",
+            city: "Città Sede",
+            prov: "Prov.",
+            address: "Indirizzo Legale",
+            
+            sector: "Settore",
+            color: "Colore Brand",
+            logo: "URL Logo",          // <--- NUOVO
+            description: "Descrizione",
+            president: "Presidente",
+            website: "Sito Web",
+            social: "Pagina Social (FB/IG)", // <--- NUOVO
+            phone: "Telefono Pubblico",
+            public_email: "Email Pubblica",
+            
+            admin_fn: "Nome Admin",
+            admin_ln: "Cognome Admin",
+            admin_email: "Email Login",
+            admin_pass: "Password"
+        }
     }
   }
 };

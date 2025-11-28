@@ -7,8 +7,16 @@ export const ENDPOINTS = {
     LOGIN: '/auth/login.php',
     HOME_STATS: '/dashboard/home_stats.php',
     CLOCK_IN: '/shifts/clock_in.php',
-    // VERIFICA CHE QUESTA RIGA CI SIA:
-    ADMIN_USERS_LIST: '/admin/users/list.php', 
+    
+    // User Management
+    ADMIN_USERS_LIST: '/admin/users/list.php',
+    ADMIN_USERS_CREATE: '/admin/users/create.php',
+    
+    // Organization Management (THESE WERE MISSING)
+    ADMIN_ORGS_LIST: '/admin/orgs/list.php',
+    ADMIN_ORGS_CREATE: '/admin/orgs/create_org_with_admin.php',
+    GEO_SEARCH: '/geo/search_cities.php',
+    UPLOAD: '/upload.php',
 };
 
 export const apiCall = async (endpoint, method = 'GET', body = null) => {
@@ -20,7 +28,7 @@ export const apiCall = async (endpoint, method = 'GET', body = null) => {
     if (body) config.body = JSON.stringify(body);
 
     try {
-        if (!endpoint) throw new Error("Endpoint mancante");
+        if (!endpoint) throw new Error("Endpoint mancante (undefined)");
         
         const response = await fetch(`${BASE_URL}${endpoint}`, config);
         

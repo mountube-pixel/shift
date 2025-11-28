@@ -5,6 +5,7 @@ import AdminHomePage from '../pages/admin/home.js';
 import LoginPage from '../pages/login.js';
 import NotFoundPage from '../pages/404.js';
 import AdminUsersPage from '../pages/admin/users.js';
+import AdminOrgsPage from '../pages/admin/orgs.js';
 
 var routes = [
   // Rotta Volontari
@@ -67,6 +68,11 @@ var routes = [
     path: '/login/',
     component: LoginPage,
   },
+
+  {
+    path: '/admin/orgs/',
+    component: AdminOrgsPage,
+},
 
   // La rotta 404 deve essere SEMPRE l'ultima
   {
