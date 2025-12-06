@@ -38,6 +38,31 @@ export default {
       orgs: "Associazioni",
       settings: "Impostazioni"
     },
+    
+    // --- NUOVA SEZIONE: Dashboard Ente ---
+    org_dashboard: {
+        title: "Gestione Associazione",
+        subtitle: "Panoramica delle attività",
+        loading: "Analisi dati in corso...",
+        quick_actions: "Azioni Rapide",
+        recent_activity: "Attività Recente",
+        panel_control: "Pannello di Controllo",
+        
+        // Bottoni
+        btn_new_project: "Nuovo Progetto",
+        btn_approve: "Approva Ore",
+        btn_volunteers: "Volontari",
+        btn_settings: "Configura",
+        
+        // KPI
+        kpi_projects: "Progetti Attivi",
+        kpi_projects_sub: "In corso",
+        kpi_hours: "Approvazioni",
+        kpi_hours_sub: "Ore in attesa",
+        kpi_volunteers: "Volontari",
+        kpi_volunteers_sub: "Registrati"
+    },
+
     users: {
         title: "Gestione Utenti",
         search_placeholder: "Cerca volontario...",
@@ -52,7 +77,6 @@ export default {
         status_suspended: "Sospeso",
         btn_add: "Nuovo Utente",
         
-        // Form spostato DENTRO users
         form: {
             title_new: "Nuovo Utente",
             first_name: "Nome",
@@ -63,7 +87,7 @@ export default {
             password_placeholder: "Password provvisoria",
             save: "Salva Utente"
         }
-    }, // <--- QUESTA VIRGOLA È FONDAMENTALE
+    },
     orgs: {
         title: "Gestione Associazioni",
         btn_add: "Nuova Associazione",
@@ -74,7 +98,7 @@ export default {
         form: {
             title_new: "Registra Ente",
             tab_info: "Dati Ente",
-            tab_details: "Dettagli & Web", // Aggiornato
+            tab_details: "Dettagli & Web",
             tab_admin: "Primo Amministratore",
             
             name: "Ragione Sociale",
@@ -85,11 +109,11 @@ export default {
             
             sector: "Settore",
             color: "Colore Brand",
-            logo: "URL Logo",          // <--- NUOVO
+            logo: "URL Logo",
             description: "Descrizione",
             president: "Presidente",
             website: "Sito Web",
-            social: "Pagina Social (FB/IG)", // <--- NUOVO
+            social: "Pagina Social (FB/IG)",
             phone: "Telefono Pubblico",
             public_email: "Email Pubblica",
             

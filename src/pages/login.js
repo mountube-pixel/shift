@@ -1,5 +1,5 @@
-// src/pages/login.js
 import store from '../js/store.js';
+import { t } from '../js/i18n.js'; // Importiamo il traduttore
 
 export default (props, { $f7, $h, $update }) => {
   // Stato locale per i campi input
@@ -14,7 +14,7 @@ export default (props, { $f7, $h, $update }) => {
     // Validazione base
     if (!email || !password) {
       $f7.toast.create({ 
-        text: 'Inserisci email e password', 
+        text: t('login.subtitle'), // Usa "Inserisci le tue credenziali" come avviso
         closeTimeout: 2000, 
         cssClass: 'color-red',
         position: 'center'
@@ -23,30 +23,32 @@ export default (props, { $f7, $h, $update }) => {
     }
 
     try {
-      // 1. Chiamata all'azione dello store (che fa la fetch API)
+      // 1. Chiamata all'azione dello store
       await store.dispatch('login', { email, password });
       
       $f7.toast.create({
-          text: 'Accesso effettuato!',
+          text: t('common.success'), // "Successo"
           position: 'bottom',
           closeTimeout: 1500,
           cssClass: 'color-green'
       }).open();
 
-      // 2. LOGICA DI REINDIRIZZAMENTO BASATA SUL RUOLO
+      // 2. LOGICA DI REINDIRIZZAMENTO (ROUTER)
       const user = store.getters.user.value;
       
-      if (user && user.role === 'super_admin') {
-          // Se è Super Admin -> Vai alla Dashboard Desktop
+      if (user.role === 'super_admin') {
+          // Super Admin -> Dashboard Globale
           $f7.views.main.router.navigate('/admin/', { reloadAll: true });
+      } else if (user.role === 'org_admin') {
+          // Org Admin -> Dashboard Associazione
+          $f7.views.main.router.navigate('/org-admin/', { reloadAll: true });
       } else {
-          // Se è Volontario/Altro -> Vai alla App Mobile
+          // Volontario -> App Mobile
           $f7.views.main.router.navigate('/', { reloadAll: true });
       }
 
     } catch (err) {
-      // Gestione errori (es. password errata)
-      $f7.dialog.alert(err.message || 'Errore di connessione', 'Login Fallito');
+      $f7.dialog.alert(err.message || t('common.error'), 'Login');
     }
   };
 
@@ -73,8 +75,8 @@ export default (props, { $f7, $h, $update }) => {
         <div class="login-card shadow-soft width-100" style="background: #fff; border-radius: 24px; padding: 30px 20px; margin-top: 40px; box-sizing: border-box; max-width: 400px;">
           
           <div class="text-align-center margin-bottom">
-            <h2 class="no-margin size-22 font-weight-bold text-color-black">Accedi</h2>
-            <p class="text-color-gray no-margin size-14">Inserisci le tue credenziali</p>
+            <h2 class="no-margin size-22 font-weight-bold text-color-black">${t('login.title')}</h2>
+            <p class="text-color-gray no-margin size-14">${t('login.subtitle')}</p>
           </div>
 
           <div class="list no-hairlines-md no-margin-vertical">
@@ -84,7 +86,7 @@ export default (props, { $f7, $h, $update }) => {
                 <div class="item-inner no-padding">
                   <div class="item-input-wrap soft-input-wrap display-flex align-items-center padding-horizontal">
                     <i class="icon f7-icons text-color-gray margin-right" style="font-size: 20px; opacity: 0.5;">envelope_fill</i>
-                    <input type="email" placeholder="Email" value="${email}" @input="${(e) => { email = e.target.value; $update(); }}" />
+                    <input type="email" placeholder="${t('common.email')}" value="${email}" @input="${(e) => { email = e.target.value; $update(); }}" />
                   </div>
                 </div>
               </li>
@@ -93,7 +95,7 @@ export default (props, { $f7, $h, $update }) => {
                 <div class="item-inner no-padding">
                    <div class="item-input-wrap soft-input-wrap display-flex align-items-center padding-horizontal">
                      <i class="icon f7-icons text-color-gray margin-right" style="font-size: 20px; opacity: 0.5;">lock_fill</i>
-                    <input type="password" placeholder="Password" value="${password}" @input="${(e) => { password = e.target.value; $update(); }}" />
+                    <input type="password" placeholder="${t('common.password')}" value="${password}" @input="${(e) => { password = e.target.value; $update(); }}" />
                   </div>
                 </div>
               </li>
@@ -103,18 +105,19 @@ export default (props, { $f7, $h, $update }) => {
 
           <div class="block no-margin padding-0">
             <button class="button button-fill button-large button-round color-teal shadow-teal ${isLoading.value ? 'disabled' : ''}" @click="${signIn}" style="height: 50px; font-weight: 700;">
-              ${isLoading.value ? 'VERIFICA...' : 'ACCEDI'}
+              ${isLoading.value ? t('common.loading') : t('login.cta')}
             </button>
           </div>
 
-        </div> <div class="block text-align-center margin-top">
-            <a href="#" class="link text-color-gray size-13" @click="${() => $f7.dialog.alert('Contatta la tua associazione.', 'Recupero')}">Password dimenticata?</a>
+        </div> 
+
+        <div class="block text-align-center margin-top">
+            <a href="#" class="link text-color-gray size-13" @click="${() => $f7.dialog.alert(t('login.contact_admin'), 'Info')}">${t('login.forgot_pass')}</a>
         </div>
         
       </div>
 
       <style>
-        /* Override per garantire lo stile corretto */
         .login-page-custom { background-color: #f7f8fa !important; }
         
         .login-content-wrapper { 

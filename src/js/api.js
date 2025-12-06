@@ -15,6 +15,12 @@ export const ENDPOINTS = {
     // Organization Management (THESE WERE MISSING)
     ADMIN_ORGS_LIST: '/admin/orgs/list.php',
     ADMIN_ORGS_CREATE: '/admin/orgs/create_org_with_admin.php',
+    ADMIN_ORGS_UPDATE: '/admin/orgs/update.php',
+    
+    // Org Admin (NUOVO)
+    ORG_ADMIN_STATS: '/org-admin/dashboard/stats.php',
+
+    // UTILITY
     GEO_SEARCH: '/geo/search_cities.php',
     UPLOAD: '/upload.php',
 };
