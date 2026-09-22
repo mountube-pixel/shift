@@ -1,0 +1,124 @@
+/* Lo stile della pagina. Le regole non negoziabili che vivono qui:
+   bersagli di tocco di almeno 44px reali (fessure comprese, anche se la
+   linea disegnata è sottile) e campo sempre visibile mentre si montano i
+   blocchi (resta appiccicato in alto, o in colonna fissa sui tablet larghi). */
+
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  --bg: #f5f4f8; --fg: #14151b; --muted: #6a6e7a; --line: #dedce6; --card: #fff;
+  --mov: #2f7ce0; --ctrl: #e6a11c; --tool: #e0452f; --tu: #0fb57a; --code: #eeedf4;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d0f16; --fg: #eceaf2; --muted: #8e93a2; --line: #252836; --card: #161927;
+    --mov: #4f92ff; --ctrl: #ffb93b; --tool: #ff6a50; --tu: #2ee39a; --code: #0a0c13;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d0f16; --fg: #eceaf2; --muted: #8e93a2; --line: #252836; --card: #161927;
+  --mov: #4f92ff; --ctrl: #ffb93b; --tool: #ff6a50; --tu: #2ee39a; --code: #0a0c13;
+}
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0; background: var(--bg); color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px; line-height: 1.5;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wrap { max-width: 640px; margin: 0 auto; padding: 10px 16px 24px; }
+
+/* ============ il campo (per ora un segnaposto: il canvas arriva col punto 3) */
+.schermo { border-radius: 16px; overflow: hidden; position: sticky; top: 8px; z-index: 30; background: #120d28; }
+#campo {
+  aspect-ratio: 1 / 0.62; max-height: 44vh; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #171040, #3d1f66 55%, #a4456a);
+}
+#campo .attesa { color: rgba(255,255,255,.75); font-size: 13px; font-weight: 700; padding: 0 16px; text-align: center; }
+.tit {
+  position: absolute; left: 8px; right: 8px; top: 8px; background: rgba(10,8,25,.72);
+  border-radius: 10px; padding: 6px 10px; color: #fff; font-size: 12.5px; font-weight: 700;
+}
+.tit b { display: block; font-size: 9.5px; letter-spacing: .11em; text-transform: uppercase; opacity: .6; }
+.verdetto {
+  position: absolute; left: 0; right: 0; bottom: 8px; text-align: center;
+  font-weight: 900; font-size: 14px; color: #ffd24a; text-shadow: 0 2px 12px rgba(0,0,0,.9);
+}
+.contatori { display: flex; gap: 8px; margin-top: 8px; }
+.contatori div {
+  flex: 1; background: var(--card); border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 7px 10px; text-align: center; font-size: 12px; font-weight: 800; color: var(--muted);
+}
+.contatori b { display: block; font-size: 20px; line-height: 1.15; color: var(--fg); }
+
+/* ============ il programma */
+.prog {
+  margin-top: 12px; background: var(--card); border: 1.5px solid var(--line);
+  border-radius: 16px; padding: 6px 10px; min-height: 88px;
+}
+.lista { display: flex; flex-direction: column; }
+.vuoto { color: var(--muted); font-size: 13px; font-style: italic; padding: 10px 4px 0; text-align: center; }
+
+/* la fessura dove il cursore si posa: disegnata sottile, toccabile 44px */
+.slot { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.slot::after { content: ""; flex: 1; height: 5px; border-radius: 3px; background: transparent; }
+.slot:active::after { background: var(--line); }
+.slot.attivo::after { background: var(--tu); height: 7px; box-shadow: 0 0 12px var(--tu); }
+
+.bl {
+  position: relative; border-radius: 12px; color: #fff; font-weight: 800; font-size: 14.5px;
+  display: flex; align-items: center; gap: 8px; padding: 6px 10px; min-height: 48px; flex-wrap: wrap;
+}
+.bl.m { background: var(--mov); } .bl.c { background: var(--ctrl); } .bl.u { background: var(--tool); }
+.bl::after {
+  content: ""; position: absolute; left: 18px; bottom: -5px; width: 24px; height: 6px;
+  background: inherit; border-radius: 0 0 6px 6px; z-index: 1;
+}
+.bl.ora { outline: 3px solid #fff; outline-offset: 2px; }
+.bl .ic { font-size: 17px; }
+.bl .sp { flex: 1; }
+.bl .val {
+  font: inherit; font-size: 13.5px; font-weight: 900; border: 0; min-height: 44px; padding: 8px 14px;
+  border-radius: 22px; background: #fff; color: #14151b; cursor: pointer;
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); white-space: nowrap;
+}
+.bl .val:active { transform: translateY(1px); box-shadow: none; }
+.bl .val[data-op] { background: rgba(255,255,255,.28); color: #fff; min-width: 44px; }
+.bl .x {
+  background: rgba(0,0,0,.22); border: 0; color: #fff; border-radius: 10px;
+  font: inherit; font-size: 13px; font-weight: 900; min-width: 44px; min-height: 44px;
+  padding: 0 10px; cursor: pointer;
+}
+.dentro { background: var(--code); border-radius: 10px; margin-left: 16px; padding: 2px 8px; min-height: 48px; }
+.varamo { color: var(--fg); opacity: .85; font-weight: 900; font-size: 12.5px; padding: 3px 0 3px 14px; }
+.piede { min-height: 13px; height: 13px; border-radius: 0 0 10px 10px; padding: 0; }
+
+/* ============ la palette */
+.palette {
+  position: sticky; bottom: 0; background: var(--bg);
+  padding: 10px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+  margin-top: 10px; border-top: 1px solid var(--line); z-index: 10;
+}
+.palette > div { display: flex; gap: 7px; flex-wrap: wrap; }
+.palette button {
+  font: inherit; font-size: 13.5px; font-weight: 900; border: 0; border-radius: 12px;
+  min-height: 48px; padding: 10px 14px; color: #fff; cursor: pointer;
+  box-shadow: 0 3px 0 rgba(0,0,0,.22);
+}
+.palette button:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0,0,0,.22); }
+.palette .m { background: var(--mov); } .palette .c { background: var(--ctrl); } .palette .u { background: var(--tool); }
+
+/* ============ tablet in orizzontale: campo a sinistra, blocchi a destra */
+@media (min-width: 880px) {
+  .wrap {
+    max-width: 1180px;
+    display: grid; grid-template-columns: minmax(360px, 46%) 1fr;
+    gap: 18px; align-items: start;
+  }
+  .colCampo { position: sticky; top: 10px; }
+  .schermo { position: relative; top: 0; }
+  .colProg { min-width: 0; }
+  .prog { margin-top: 0; }
+}

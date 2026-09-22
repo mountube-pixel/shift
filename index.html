@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PERCORSO — programma il robot</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<link rel="stylesheet" href="ui/stile.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="colCampo">
+    <div class="schermo">
+      <div id="campo"><span class="attesa">🤖 qui arriva il campo isometrico con la linea tratteggiata (punto 3)</span></div>
+      <div class="tit"><b id="lvNome"></b><span id="lvGoal"></span></div>
+      <div class="verdetto" id="verdetto"></div>
+    </div>
+    <div class="contatori" id="contatori"></div>
+  </div>
+  <div class="colProg">
+    <div class="prog" id="prog"></div>
+    <div class="palette" id="palette"></div>
+  </div>
+</div>
+<script type="module" src="ui/app.js"></script>
+</body>
+</html>
