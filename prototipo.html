@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PERCORSO — programma il robot</title>
+<style>
+  :root{
+    box-sizing:border-box;
+    padding-top:env(safe-area-inset-top,0px);
+    padding-bottom:env(safe-area-inset-bottom,0px);
+    --bg:#f5f4f8;--fg:#14151b;--muted:#6a6e7a;--line:#dedce6;--card:#fff;
+    --mov:#2f7ce0;--ctrl:#e6a11c;--tool:#e0452f;--tu:#0fb57a;--code:#eeedf4;
+  }
+  @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+    --bg:#0d0f16;--fg:#eceaf2;--muted:#8e93a2;--line:#252836;--card:#161927;
+    --mov:#4f92ff;--ctrl:#ffb93b;--tool:#ff6a50;--tu:#2ee39a;--code:#0a0c13;}}
+  :root[data-theme="dark"]{--bg:#0d0f16;--fg:#eceaf2;--muted:#8e93a2;--line:#252836;--card:#161927;
+    --mov:#4f92ff;--ctrl:#ffb93b;--tool:#ff6a50;--tu:#2ee39a;--code:#0a0c13;}
+  *,*::before,*::after{box-sizing:inherit}
+  body{margin:0;background:var(--bg);color:var(--fg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.5}
+  .wrap{max-width:640px;margin:0 auto;padding:10px 12px 24px}
+  canvas{display:block;width:100%}
+
+  .tabs{display:flex;gap:6px;margin-bottom:9px}
+  .spie{display:flex;gap:6px;margin-top:8px}
+  .spia{flex:1;border-radius:11px;padding:7px 4px;text-align:center;font-size:11px;font-weight:900;
+    background:var(--code);color:var(--muted);border:2px solid var(--line)}
+  .spia.ok{background:rgba(46,227,154,.16);border-color:var(--tu);color:var(--tu)}
+  .spia.ko{background:rgba(255,90,74,.13);border-color:#ff5a4a;color:#ff5a4a}
+  .spia b{display:block;font-size:16px}
+  .tabs button{flex:1;font:inherit;font-size:12px;font-weight:900;border:2px solid var(--line);background:var(--card);
+    color:var(--muted);border-radius:12px;padding:9px 6px;cursor:pointer}
+  .tabs button.on{border-color:var(--tu);background:rgba(46,227,154,.14);color:var(--tu)}
+  .tabs button.lock{opacity:.4}
+  .gara{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-top:9px}
+  .sfid{display:flex;gap:6px;flex-wrap:wrap}
+  .sfid button{font:inherit;font-size:12.5px;font-weight:800;border:2px solid var(--line);background:var(--card);
+    color:var(--fg);border-radius:20px;padding:7px 12px;cursor:pointer}
+  .sfid button.on{border-color:var(--mov);background:rgba(47,124,224,.15);color:var(--mov)}
+  .blocchiPan{background:linear-gradient(180deg,rgba(47,124,224,.14),rgba(47,124,224,.04));
+    border:2px solid var(--mov);border-radius:16px;padding:12px;margin-top:10px}
+  .blocchiPan .riga{display:flex;align-items:center;gap:12px}
+  .blocchiPan .num{text-align:center;flex:none;min-width:72px}
+  .blocchiPan .num b{display:block;font-size:34px;line-height:1;font-weight:900;color:var(--mov)}
+  .blocchiPan .num span{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .scala{flex:1;display:flex;flex-direction:column;gap:4px}
+  .tap{display:flex;align-items:center;gap:7px;font-size:12.5px;font-weight:800;border-radius:9px;padding:5px 9px;
+    background:var(--code);color:var(--muted)}
+  .tap.on{background:var(--tu);color:#04180f}
+  .tap i{font-style:normal;font-size:14px}
+  .tap .sp2{flex:1}
+  .timerBox{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+  .timerBox .big{font-size:26px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--tool)}
+  .cronoStage{position:absolute;top:44px;left:0;right:0;text-align:center;font-size:30px;font-weight:900;
+    color:#fff;text-shadow:0 3px 16px rgba(0,0,0,.8);font-variant-numeric:tabular-nums;letter-spacing:.04em}
+  .punteggi{display:flex;gap:8px;margin-top:9px;font-size:12.5px;font-weight:800}
+  .punteggi div{flex:1;background:var(--code);border-radius:11px;padding:8px 10px;text-align:center}
+  .punteggi b{display:block;font-size:19px;line-height:1.15}
+  .med{font-size:17px}
+  .codice{width:100%;font:inherit;font-size:12px;border:1.5px solid var(--line);border-radius:11px;
+    padding:9px;background:var(--code);color:var(--fg);margin-top:8px;resize:none}
+  .off{display:flex;gap:12px;align-items:flex-start;margin-top:4px}
+  .vetr{flex:0 0 40%;max-width:170px;border-radius:14px;overflow:hidden;background:radial-gradient(circle at 50% 35%,#3b2d6b,#141326)}
+  #vetrina{aspect-ratio:1/1.05}
+  .grp{margin-bottom:10px}
+  .grp h4{margin:0 0 5px;font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:800}
+  .grp div{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{font:inherit;font-size:12px;font-weight:800;border:2px solid var(--line);background:transparent;color:var(--fg);
+    border-radius:20px;padding:6px 12px;cursor:pointer}
+  .chip.on{background:var(--tu);border-color:var(--tu);color:#04180f}
+  .chip.lk{opacity:.42}
+  .chip.pall{width:30px;height:30px;padding:0;border-radius:50%}
+  .livelli{display:flex;gap:5px;overflow-x:auto;padding:2px 0 8px}
+  .lv{flex:none;width:34px;height:34px;border-radius:11px;border:2px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:var(--muted);cursor:pointer}
+  .lv.on{border-color:var(--tu);background:rgba(46,227,154,.14);color:var(--tu)}
+  .lv.fatto{background:var(--tu);border-color:var(--tu);color:#04180f}
+  .lv.chiuso{opacity:.35}
+
+  .schermo{border-radius:16px;overflow:hidden;position:relative;background:#120d28}
+  #stage{aspect-ratio:1/0.8}
+  .tit{position:absolute;left:8px;right:8px;top:8px;background:rgba(10,8,25,.72);border-radius:10px;
+    padding:6px 10px;color:#fff;font-size:12.5px;font-weight:700}
+  .tit b{display:block;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;opacity:.6}
+  .verdetto{position:absolute;left:0;right:0;bottom:8px;text-align:center;font-weight:900;font-size:14px;
+    text-shadow:0 2px 12px rgba(0,0,0,.9)}
+
+  .comandi{display:flex;gap:7px;margin-top:8px}
+  .comandi button{font:inherit;font-weight:900;font-size:14px;border:0;border-radius:12px;padding:12px 14px;cursor:pointer}
+  #play{flex:1;background:linear-gradient(180deg,#38e89c,#0fb57a);color:#04180f;box-shadow:0 3px 0 rgba(8,118,81,.5)}
+  #play:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(8,118,81,.5)}
+  .comandi .g{background:transparent;color:var(--fg);border:1.5px solid var(--line);font-size:13px;font-weight:800}
+
+  /* programma */
+  .prog{margin-top:12px;background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:10px;min-height:70px}
+  .lista{display:flex;flex-direction:column}
+  .slot{height:22px;display:flex;align-items:center;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  .slot::after{content:"";flex:1;height:4px;border-radius:2px;background:transparent}
+  .slot:active::after{background:var(--line)}
+  .slot.attivo::after{background:var(--tu);height:6px;box-shadow:0 0 12px var(--tu)}
+  .bl{position:relative;border-radius:11px;color:#fff;font-weight:800;font-size:14.5px;
+    display:flex;align-items:center;gap:7px;padding:10px 11px}
+  .bl.m{background:var(--mov)}.bl.c{background:var(--ctrl)}.bl.u{background:var(--tool)}
+  .bl::after{content:"";position:absolute;left:18px;bottom:-5px;width:24px;height:6px;background:inherit;border-radius:0 0 6px 6px;z-index:1}
+  .bl.ora{outline:3px solid #fff;outline-offset:2px}
+  .bl .ic{font-size:17px}
+  .bl .val{font:inherit;font-size:13.5px;font-weight:900;border:0;padding:7px 13px;border-radius:16px;
+    background:#fff;color:#14151b;cursor:pointer;-webkit-tap-highlight-color:transparent;
+    box-shadow:inset 0 -2px 0 rgba(0,0,0,.12);white-space:nowrap}
+  .bl .val:active{transform:translateY(1px);box-shadow:none}
+  .bl .sp{flex:1}
+  .bl .x{background:rgba(0,0,0,.22);border:0;color:#fff;border-radius:7px;font-size:12px;padding:5px 7px;cursor:pointer;font-weight:900}
+  .dentro{background:var(--code);border-radius:9px;margin:0 0 0 15px;padding:6px 7px;min-height:26px}
+  .piede{height:13px;border-radius:0 0 9px 9px;margin-bottom:0}
+  .vuoto{color:var(--muted);font-size:13px;font-style:italic;padding:10px 4px;text-align:center}
+
+  .palette{position:sticky;bottom:0;background:var(--bg);padding:9px 0 calc(6px + env(safe-area-inset-bottom,0px));
+    margin-top:10px;border-top:1px solid var(--line);z-index:10}
+  .palette div{display:flex;gap:6px;flex-wrap:wrap}
+  .palette button{font:inherit;font-size:13.5px;font-weight:900;border:0;border-radius:12px;padding:11px 13px;
+    color:#fff;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,.22)}
+  .palette button:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.22)}
+  .palette .m{background:var(--mov)}.palette .c{background:var(--ctrl)}.palette .u{background:var(--tool)}
+
+  .nota{background:var(--code);border-radius:13px;padding:10px 12px;font-size:13.5px;margin-top:11px}
+  .nota b{display:block;font-size:10px;letter-spacing:.11em;text-transform:uppercase;margin-bottom:4px;color:var(--muted)}
+  .vinta{background:linear-gradient(180deg,rgba(46,227,154,.2),rgba(46,227,154,.05));
+    border:1.5px solid rgba(46,227,154,.5);border-radius:14px;padding:12px;margin-top:11px;text-align:center}
+  .vinta b{display:block;font-size:15px;font-weight:900;color:var(--tu);margin-bottom:7px}
+  .vinta button{font:inherit;font-weight:900;font-size:15px;border:0;border-radius:12px;padding:12px 18px;width:100%;
+    background:linear-gradient(180deg,#38e89c,#0fb57a);color:#04180f;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="tabs" id="tabs">
+  <button data-m="tut" class="on">🎓 Tutorial</button>
+  <button data-m="arena" class="lock">🏁 Arena</button>
+  <button data-m="lab" class="lock">🔬 Lab</button>
+  <button data-m="off" class="lock">🔧 Officina</button>
+</div>
+<div class="livelli" id="livelli"></div>
+
+<div class="schermo">
+  <canvas id="stage"></canvas>
+  <div class="tit"><b id="lvNome">livello</b><span id="lvGoal"></span></div>
+  <div class="cronoStage" id="cronoStage"></div>
+  <div class="verdetto" id="verdetto"></div>
+</div>
+
+<div class="comandi">
+  <button id="play">▶ VAI</button>
+  <button class="g" id="stop">↺</button>
+</div>
+
+<div class="prog" id="prog"></div>
+<div id="arenaPan"></div>
+<div class="nota" id="nota"></div>
+<div id="fine"></div>
+
+<div class="palette" id="palette"></div>
+</div>
+
+<div class="wrap" id="vistaOff" style="display:none">
+  <div class="tabs" id="tabs2">
+    <button data-m="tut">🎓 Tutorial</button>
+    <button data-m="arena">🏁 Arena</button>
+    <button data-m="lab">🔬 Lab</button>
+    <button data-m="off" class="on">🔧 Officina</button>
+  </div>
+  <div class="off">
+    <div class="vetr"><canvas id="vetrina"></canvas></div>
+    <div style="flex:1;min-width:0" id="slotOff"></div>
+  </div>
+  <div class="nota" id="notaOff"><b>come si sbloccano</b>Corri in Arena. Ogni medaglia apre qualcosa.</div>
+</div>
+
+<script>
+/* ===================================== dati */
+const DIRS=[[0,-1],[1,0],[0,1],[-1,0]];
+const cl=(v,a,b)=>Math.max(a,Math.min(b,v));
+const eo=t=>t<0?0:t>1?1:1-Math.pow(1-t,2);
+let UID=1;
+const nuovo=t=>({avanti:{t:"avanti"},dx:{t:"dx"},sx:{t:"sx"},usa:{t:"usa"},
+  ripeti:{t:"ripeti",n:3,body:[]},finche:{t:"finche",c:"libero",body:[]},
+  se:{t:"se",c:"libero",op:"base",c2:"libero",body:[],alt:null},sempre:{t:"sempre",body:[]},
+  accendi:{t:"accendi"},spegnispia:{t:"spegnispia"}}[t]);
+const SENSORI={libero:"davanti è libero",bloccato:"davanti è bloccato",
+  dxLibera:"a destra è libero",dxMuro:"a destra c'è un muro",
+  sxLibera:"a sinistra è libero",sxMuro:"a sinistra c'è un muro",
+  dietroLibero:"dietro è libero",
+  metaDavanti:"la meta è davanti",metaDestra:"la meta è a destra",
+  metaSinistra:"la meta è a sinistra",metaDietro:"la meta è dietro",
+  giaPassato:"sono già passato di qui",nuovoDavanti:"davanti non ci sono ancora stato",
+  spia:"la spia è accesa"};
+const ORDSENS=Object.keys(SENSORI);
+const OPLOG={base:"—",e:"e",o:"o"};
+const ORDOP=Object.keys(OPLOG);
+function conId(n){n.id=UID++;(n.body||[]).forEach(conId);return n}
+
+const LIVELLI=[
+{n:"Dritto",goal:"Arriva alla bandiera.",
+ nota:"Ogni <b>avanti</b> è un passo. Mentre aggiungi blocchi guarda la <b>linea tratteggiata</b> sul campo: è dove finirà il robot. Quando la linea tocca la bandiera hai già vinto, e VAI serve solo a goderselo.",
+ blocchi:["avanti"],G:5,start:[1,2],f:1,band:[3,2]},
+{n:"L'angolo",goal:"Serve una curva.",
+ nota:"<b>gira</b> non fa un passo: cambia solo la direzione. La linea ti mostra subito da che parte è girato.",
+ blocchi:["avanti","dx","sx"],G:6,start:[1,4],f:1,band:[4,1]},
+{n:"Che noia",goal:"Sei passi in fila.",
+ nota:"Sei blocchi uguali sono troppi. Metti <b>ripeti</b>, poi tocca la fessura verde <b>dentro</b> di lui e aggiungi lì l'avanti.",
+ blocchi:["avanti","dx","sx","ripeti"],G:9,start:[1,4],f:1,band:[7,4]},
+{n:"Scalini",goal:"Un passo avanti, uno in su, e daccapo.",
+ nota:"Anche un <b>gruppo</b> di blocchi diversi si ripete. Dentro il ripeti mettine più di uno.",
+ blocchi:["avanti","dx","sx","ripeti"],G:9,start:[1,7],f:1,band:[7,1],
+ muri:["1,6","2,5","3,4","4,3","5,2","6,1","3,7","4,6","5,5","6,4","7,3"]},
+{n:"Il giro",goal:"Gira intorno al blocco.",
+ nota:"Si può mettere un <b>ripeti dentro un altro ripeti</b>. Il giro è fatto di lati tutti uguali: un lato è già un ripeti, e i lati si ripetono.",
+ blocchi:["avanti","dx","sx","ripeti"],G:7,start:[1,1],f:1,band:[1,5],
+ muri:["2,2","3,2","4,2","2,3","3,3","4,3","2,4","3,4","4,4"]},
+{n:"Il corridoio",goal:"Lungo quanto? Non contarlo.",
+ nota:"<b>ripeti finché</b> non chiede un numero: va avanti fino a quando la strada è libera, e si ferma da solo. Due corridoi, due finché.",
+ blocchi:["avanti","dx","sx","ripeti","finche"],G:11,start:[1,1],f:2,band:[9,9],
+ muri:["2,0","2,1","2,2","2,3","2,4","2,5","2,6","2,7","2,8",
+       "3,8","4,8","5,8","6,8","7,8","8,8","9,8","10,8","1,10","0,10"]},
+{n:"Il fuoco",goal:"Prendi l'estintore, poi passa.",
+ nota:"Passa sopra l'estintore per raccoglierlo. Davanti al fuoco usa <b>usa l'attrezzo</b>. Il finché ti porta fin lì senza contare i passi.",
+ blocchi:["avanti","dx","sx","ripeti","finche","usa"],G:9,start:[1,4],f:1,band:[7,4],
+ muri:["4,0","4,1","4,2","4,6","4,7","4,8"],fuoco:["4,3","4,4","4,5"],est:["2,4"]},
+{n:"Tutto insieme",goal:"Chiave, porta, estintore, fuoco.",
+ nota:"Chiave e porta funzionano come estintore e fuoco. Monta un pezzo, guarda dove si ferma la linea, aggiungi il pezzo dopo. Non serve immaginare tutto in testa.",
+ blocchi:["avanti","dx","sx","ripeti","finche","usa"],G:11,start:[1,1],f:2,band:[9,9],
+ muri:["2,0","2,1","2,2","2,3","2,4","2,5","2,6","2,7","2,8",
+       "3,8","4,8","5,8","6,8","7,8","8,8","9,8","10,8","1,10","0,10"],
+ porta:["1,6"],chiave:["1,3"],fuoco:["5,9"],est:["3,9"]}];
+
+const _c=(x,ys)=>ys.map(y=>x+','+y), _r=(y,xs)=>xs.map(x=>x+','+y);
+const _s=(a,b)=>{const o=[];for(let i=a;i<=b;i++)o.push(i);return o};
+const ARENE=[
+{n:"Il cortile",G:9,start:[1,1],f:1,band:[7,7],
+ muri:[..._c(3,[1,2,3,4]),..._c(5,[4,5,6,7]),..._r(6,[1,2]),..._c(7,[2,3])]},
+{n:"Il pettine",G:11,start:[1,1],f:2,band:[9,0],
+ muri:[..._c(2,_s(0,7)),..._c(4,_s(3,10)),..._c(6,_s(0,7)),..._c(8,_s(3,10))]},
+{n:"La chiocciola",G:11,start:[0,0],f:1,band:[5,5],
+ muri:[..._r(2,_s(2,8)),..._r(8,_s(2,8)),..._c(2,_s(3,7)),..._c(8,[3,4,6,7]),
+       ..._r(4,_s(4,6)),..._r(6,_s(4,6)),..._c(6,[5])]},
+{n:"Le colonne",G:11,start:[1,10],f:1,band:[9,10],
+ muri:[..._c(3,_s(0,9)),..._c(5,_s(1,10)),..._c(7,_s(0,9))]},
+{n:"Il nodo",G:11,start:[1,0],f:2,band:[9,10],
+ muri:[..._r(2,_s(0,8)),..._r(4,_s(2,10)),..._r(6,_s(0,8)),..._r(8,_s(2,10))]}];
+ARENE.forEach(A=>{A.blocchi=["avanti","dx","sx","ripeti","finche","se","sempre"];A.nota="";A.goal=""});
+
+const LAB=[
+{n:"Primi labirinti",nota:"Un programma solo per tutti e tre. Una sequenza scritta a mano ne passa uno e fallisce gli altri due: devi insegnargli a <b>decidere da solo</b>. Gli serve <b>sempre</b> come giro principale, e <b>se…altrimenti</b> per scegliere.",prove:[{"G": 7, "start": [1, 1], "f": 1, "band": [5, 5], "muri": ["0,0", "1,0", "2,0", "3,0", "4,0", "5,0", "6,0", "0,1", "2,1", "6,1", "0,2", "2,2", "3,2", "4,2", "6,2", "0,3", "4,3", "6,3", "0,4", "1,4", "2,4", "4,4", "6,4", "0,5", "6,5", "0,6", "1,6", "2,6", "3,6", "4,6", "5,6", "6,6"]}, {"G": 7, "start": [1, 1], "f": 1, "band": [5, 1], "muri": ["0,0", "1,0", "2,0", "3,0", "4,0", "5,0", "6,0", "0,1", "2,1", "6,1", "0,2", "2,2", "3,2", "4,2", "6,2", "0,3", "6,3", "0,4", "1,4", "2,4", "3,4", "4,4", "6,4", "0,5", "6,5", "0,6", "1,6", "2,6", "3,6", "4,6", "5,6", "6,6"]}, {"G": 7, "start": [1, 1], "f": 1, "band": [5, 5], "muri": ["0,0", "1,0", "2,0", "3,0", "4,0", "5,0", "6,0", "0,1", "2,1", "6,1", "0,2", "2,2", "3,2", "4,2", "6,2", "0,3", "2,3", "6,3", "0,4", "2,4", "4,4", "6,4", "0,5", "4,5", "6,5", "0,6", "1,6", "2,6", "3,6", "4,6", "5,6", "6,6"]}]},
+{n:"Labirinti grandi",nota:"Stessa idea, campi più larghi. Se il programma della prova precedente li risolve tutti e tre, hai scritto qualcosa che funziona davvero e non per fortuna.",prove:[{"G": 9, "start": [1, 1], "f": 1, "band": [7, 1], "muri": ["0,0", "1,0", "2,0", "3,0", "4,0", "5,0", "6,0", "7,0", "8,0", "0,1", "2,1", "8,1", "0,2", "2,2", "3,2", "4,2", "6,2", "7,2", "8,2", "0,3", "4,3", "8,3", "0,4", "1,4", "2,4", "4,4", "5,4", "6,4", "8,4", "0,5", "2,5", "4,5", "8,5", "0,6", "2,6", "4,6", "6,6", "8,6", "0,7", "6,7", "8,7", "0,8", "1,8", "2,8", "3,8", "4,8", "5,8", "6,8", "7,8", "8,8"]}, {"G": 9, "start": [1, 1], "f": 1, "band": [7, 1], "muri": ["0,0", "1,0", "2,0", "3,0", "4,0", "5,0", "6,0", "7,0", "8,0", "0,1", "2,1", "8,1", "0,2", "2,2", "3,2", "4,2", "5,2", "6,2", "8,2", "0,3", "6,3", "8,3", "0,4", "1,4", "2,4", "3,4", "4,4", "6,4", "8,4", "0,5", "4,5", "6,5", "8,5", "0,6", "2,6", "3,6", "4,6", "6,6", "8,6", "0,7", "8,7", "0,8", "1,8", "2,8", "3,8", "4,8", "5,8", "6,8", "7,8", "8,8"]}, {"G": 9, "start": [1, 1], "f": 1, "band": [7, 1], "muri": ["0,0", "1,0", "2,0", "3,0", "4,0", "5,0", "6,0", "7,0", "8,0", "0,1", "2,1", "8,1", "0,2", "2,2", "3,2", "4,2", "5,2", "6,2", "8,2", "0,3", "4,3", "8,3", "0,4", "1,4", "2,4", "4,4", "6,4", "8,4", "0,5", "2,5", "6,5", "8,5", "0,6", "2,6", "3,6", "4,6", "5,6", "6,6", "8,6", "0,7", "8,7", "0,8", "1,8", "2,8", "3,8", "4,8", "5,8", "6,8", "7,8", "8,8"]}]}];
+LAB.forEach(F=>F.prove.forEach(P=>{P.blocchi=["avanti","dx","sx","se","sempre","ripeti","finche","accendi","spegnispia"];P.nota="";P.goal=""}));
+const SCOCCHE={rover:{t:"rover",lk:null},cingolo:{t:"cingolato",lk:"vinci"},
+  drone:{t:"drone",lk:"oro"},quad:{t:"quad",lk:"corto"}};
+const TINTE={verde:{h:"#2ee39a",lk:null},azzurro:{h:"#3dbdf5",lk:null},
+  ambra:{h:"#ffb43b",lk:"vinci"},rosa:{h:"#ff6fae",lk:"oro"},
+  viola:{h:"#b06cf0",lk:"tris"},lime:{h:"#c3f53d",lk:"corto"}};
+const SBLK={vinci:"Vinci una gara contro il bot.",oro:"Prendi una medaglia d'oro.",
+  corto:"Vinci con almeno 3 blocchi meno dell'oro.",tris:"Prendi una medaglia in tre arene diverse."};
+let cfgR={fig:"rover",col:"verde"},sbloccati=[],recordA={};
+
+let modo="tut",ar=0,avversario="medio",sfidaAmico=null;
+let lv=0,fatti=[],prog=[],cursore=null;
+try{const a=localStorage.getItem('perc2');if(a){const o=JSON.parse(a);
+  fatti=o.f||[];lv=Math.min(o.l||0,LIVELLI.length-1);
+  sbloccati=o.s||[];recordA=o.r||{};if(o.c)cfgR={...cfgR,...o.c};if(o.p)progSalvati=o.p}}catch(e){}
+let progSalvati={};
+function salva(){try{localStorage.setItem('perc2',JSON.stringify(
+  {f:fatti,l:lv,s:sbloccati,r:recordA,c:cfgR,p:progSalvati}))}catch(e){}}
+function clonaProg(p){const c=JSON.parse(JSON.stringify(p));c.forEach(conId);return c}
+function chiaveProg(){return modo==="tut"?"t"+lv:modo==="arena"?"a"+ar:modo==="lab"?"l"+labF:""}
+function salvaProg(){const k=chiaveProg();if(!k)return;
+  progSalvati[k]=JSON.parse(JSON.stringify(prog));salva()}
+function caricaProg(){const k=chiaveProg(),p=progSalvati[k];
+  prog=p&&p.length?clonaProg(p):[]}
+const aperto=k=>!k||sbloccati.includes(k);
+let labF=0,labP=0,labEsiti=[null,null,null];
+const campo=()=>modo==="arena"?ARENE[ar]:modo==="lab"?LAB[labF].prove[labP]:LIVELLI[lv];
+
+/* ===================================== esecuzione */
+function mappaDi(L){const m={};["muri","fuoco","porta","acqua","est","chiave"].forEach(k=>m[k]=new Set(L[k]||[]));return m}
+function* passi(l){
+  for(const n of l){
+    if(n.t==="ripeti"){for(let i=0;i<n.n;i++)yield* passi(n.body)}
+    else if(n.t==="sempre"){if(!n.body.length)continue;let g=0;while(g++<2000)yield* passi(n.body)}
+    else if(n.t==="finche"){let g=0;while(yield {chiedi:n,id:n.id}){if(g++>400)break;yield* passi(n.body)}}
+    else if(n.t==="se"){const v=yield {chiedi:n,id:n.id};
+      if(v)yield* passi(n.body);else if(n.alt)yield* passi(n.alt)}
+    else yield {az:n.t,id:n.id}}}
+function esegui(L,programma,max){
+  const G=L.G,m=mappaDi(L);
+  const me={x:L.start[0],y:L.start[1],f:L.f,est:0,chiavi:0,spia:false};
+  const visitate=new Set([L.start[0]+','+L.start[1]]),visite={};
+  const band={x:L.band[0],y:L.band[1]};
+  const passi2=[{x:me.x,y:me.y,f:me.f,id:null,fx:[],est:0,chiavi:0}];
+  let esito=null;
+  const davanti=()=>{const d=DIRS[me.f];return {x:me.x+d[0],y:me.y+d[1]}};
+  const bloc=p=>p.x<0||p.y<0||p.x>=G||p.y>=G||m.muri.has(p.x+','+p.y)||m.fuoco.has(p.x+','+p.y)||m.porta.has(p.x+','+p.y);
+  const it=passi(programma);
+  let inv;
+  for(let k=0;k<max;k++){
+    const r=it.next(inv);inv=undefined;
+    if(r.done){esito=esito||"finito";break}
+    const s=r.value;
+    if(s.chiedi!==undefined){
+      const lat=k=>{const d=DIRS[(me.f+k)%4];return {x:me.x+d[0],y:me.y+d[1]}};
+      const rel=()=>{const dx=band.x-me.x,dy=band.y-me.y;
+        const gir=(f,ax,ay)=>{if(f===0)return [ax,ay];if(f===1)return [ay,-ax];
+          if(f===2)return [-ax,-ay];return [-ay,ax]};
+        const [rx,ry]=gir(me.f,dx,dy);
+        if(rx===0&&ry===0)return "metaDavanti";
+        if(Math.abs(ry)>=Math.abs(rx))return ry<0?"metaDavanti":"metaDietro";
+        return rx>0?"metaDestra":"metaSinistra"};
+      const uno=q=>{
+        if(q==="libero")return !bloc(davanti());
+        if(q==="bloccato")return bloc(davanti());
+        if(q==="dxLibera")return !bloc(lat(1));
+        if(q==="dxMuro")return bloc(lat(1));
+        if(q==="sxLibera")return !bloc(lat(3));
+        if(q==="sxMuro")return bloc(lat(3));
+        if(q==="dietroLibero")return !bloc(lat(2));
+        if(q==="giaPassato")return visitate.has(me.x+','+me.y+'|'+(visite[me.x+','+me.y]>1));
+        if(q==="nuovoDavanti"){const p=davanti();return !bloc(p)&&!visitate.has(p.x+','+p.y)}
+        if(q==="spia")return me.spia;
+        if(q.indexOf("meta")===0)return rel()===q;
+        return false};
+      const n0=s.chiedi;
+      const a=uno(typeof n0==="string"?n0:n0.c);
+      if(typeof n0==="string"||!n0.op||n0.op==="base")inv=a;
+      else if(n0.op==="e")inv=a&&uno(n0.c2);
+      else inv=a||uno(n0.c2);
+      continue}
+    const fx=[];
+    if(s.az==="dx")me.f=(me.f+1)%4;
+    else if(s.az==="sx")me.f=(me.f+3)%4;
+    else if(s.az==="accendi")me.spia=true;
+    else if(s.az==="spegnispia")me.spia=false;
+    else{
+      const p=davanti(),kk=p.x+','+p.y;
+      if(s.az==="usa"){
+        if(m.fuoco.has(kk)&&me.est>0){m.fuoco.delete(kk);me.est--;fx.push({t:"usa",x:p.x,y:p.y,e:"SPENTO!"})}
+        else if(m.porta.has(kk)&&me.chiavi>0){m.porta.delete(kk);me.chiavi--;fx.push({t:"usa",x:p.x,y:p.y,e:"APERTA!"})}
+        else fx.push({t:"vuoto",x:p.x,y:p.y})}
+      else{
+        if(bloc(p))fx.push({t:"urto",x:p.x,y:p.y});
+        else{me.x=p.x;me.y=p.y;visitate.add(me.x+','+me.y);
+          const c=me.x+','+me.y;
+          if(m.est.has(c)){m.est.delete(c);me.est++;fx.push({t:"presa",x:me.x,y:me.y,e:"🧯"})}
+          if(m.chiave.has(c)){m.chiave.delete(c);me.chiavi++;fx.push({t:"presa",x:me.x,y:me.y,e:"🗝"})}}}}
+    passi2.push({x:me.x,y:me.y,f:me.f,id:s.id,fx,est:me.est,chiavi:me.chiavi,spia:me.spia,
+      fuoco:[...m.fuoco],porta:[...m.porta],ogE:[...m.est],ogC:[...m.chiave]});
+    if(me.x===band.x&&me.y===band.y){esito="ok";break}}
+  if(!esito)esito="lungo";
+  passi2.forEach(p=>{if(!p.fuoco){p.fuoco=[...m.fuoco];p.porta=[...m.porta];p.ogE=[...m.est];p.ogC=[...m.chiave]}});
+  return {passi:passi2,esito,G}}
+
+/* ===================================== percorso ottimo (per il par e per il bot) */
+function ottimo(L){
+  const G=L.G,mu=new Set(L.muri||[]);
+  const bloc=(x,y)=>x<0||y<0||x>=G||y>=G||mu.has(x+','+y);
+  const key=(x,y,f)=>x+','+y+','+f;
+  const p0={x:L.start[0],y:L.start[1],f:L.f};
+  const vis={},coda=[{...p0,az:[]}];vis[key(p0.x,p0.y,p0.f)]=true;
+  while(coda.length){
+    const c=coda.shift();
+    if(c.x===L.band[0]&&c.y===L.band[1])return c.az;
+    const mosse=[];
+    const d=DIRS[c.f],nx=c.x+d[0],ny=c.y+d[1];
+    if(!bloc(nx,ny))mosse.push({x:nx,y:ny,f:c.f,a:"avanti"});
+    mosse.push({x:c.x,y:c.y,f:(c.f+1)%4,a:"dx"});
+    mosse.push({x:c.x,y:c.y,f:(c.f+3)%4,a:"sx"});
+    for(const m of mosse){const k=key(m.x,m.y,m.f);
+      if(vis[k])continue;vis[k]=true;coda.push({x:m.x,y:m.y,f:m.f,az:c.az.concat(m.a)})}}
+  return null}
+const PAR={};
+function parDi(i){if(PAR[i]===undefined){const o=ottimo(ARENE[i]);PAR[i]=o?o.length:999}return PAR[i]}
+function passiBot(i,handicap){
+  const o=ottimo(ARENE[i]);if(!o)return [];
+  const L=ARENE[i];const G=L.G,mu=new Set(L.muri||[]);
+  const me={x:L.start[0],y:L.start[1],f:L.f};
+  const out=[{x:me.x,y:me.y,f:me.f}];
+  const tot=o.length+handicap;
+  let att=0;
+  for(let k=0;k<tot;k++){
+    const quota=Math.floor(k*o.length/tot);
+    if(quota>att&&att<o.length){
+      const a=o[att++];
+      if(a==="dx")me.f=(me.f+1)%4;
+      else if(a==="sx")me.f=(me.f+3)%4;
+      else{const d=DIRS[me.f],nx=me.x+d[0],ny=me.y+d[1];
+        if(!(nx<0||ny<0||nx>=G||ny>=G||mu.has(nx+','+ny))){me.x=nx;me.y=ny}}}
+    out.push({x:me.x,y:me.y,f:me.f})}
+  while(att<o.length){const a=o[att++];
+    if(a==="dx")me.f=(me.f+1)%4;else if(a==="sx")me.f=(me.f+3)%4;
+    else{const d=DIRS[me.f],nx=me.x+d[0],ny=me.y+d[1];
+      if(!(nx<0||ny<0||nx>=G||ny>=G||mu.has(nx+','+ny))){me.x=nx;me.y=ny}}
+    out.push({x:me.x,y:me.y,f:me.f})}
+  return out}
+
+/* ===================================== disegno */
+const stg=document.getElementById('stage');let cx=stg.getContext('2d');
+let st={},anim=null,iA=0,fA=0,ultimo=0,part=[],testi=[],shake=0;
+function Pf(x,y,z){return [st.OX+(x-y)*st.TW/2,st.OY+(x+y)*st.TH/2-(z||0)*st.ZU]}
+function pl(p,fill,stroke,lw){cx.beginPath();cx.moveTo(p[0][0],p[0][1]);
+  for(let i=1;i<p.length;i++)cx.lineTo(p[i][0],p[i][1]);cx.closePath();
+  if(fill){cx.fillStyle=fill;cx.fill()}
+  if(stroke){cx.strokeStyle=stroke;cx.lineWidth=lw||1.1;cx.lineJoin="round";cx.stroke()}}
+const LN="rgba(10,7,26,.55)";
+const dk=(h,k)=>{const n=parseInt(h.slice(1),16);
+  return "rgb("+Math.round((n>>16&255)*k)+","+Math.round((n>>8&255)*k)+","+Math.round((n&255)*k)+")"};
+function cubo(x,y,z,w,d,h,col){if(h<=.002)return;
+  pl([Pf(x,y+d,z),Pf(x+w,y+d,z),Pf(x+w,y+d,z+h),Pf(x,y+d,z+h)],dk(col,.55),LN);
+  pl([Pf(x+w,y,z),Pf(x+w,y+d,z),Pf(x+w,y+d,z+h),Pf(x+w,y,z+h)],dk(col,.78),LN);
+  pl([Pf(x,y,z+h),Pf(x+w,y,z+h),Pf(x+w,y+d,z+h),Pf(x,y+d,z+h)],col,LN)}
+function tile(x,y,col,z,ol){pl([Pf(x,y,z),Pf(x+1,y,z),Pf(x+1,y+1,z),Pf(x,y+1,z)],col,ol?LN:null,1)}
+function ell(a,b,r1,r2,col,al){cx.save();cx.globalAlpha=al===undefined?1:al;cx.fillStyle=col;
+  cx.beginPath();cx.ellipse(a,b,r1,r2,0,0,7);cx.fill();cx.restore()}
+function rr(x,y,w,h,r){r=Math.min(r,w/2,h/2);cx.beginPath();cx.moveTo(x+r,y);
+  cx.arcTo(x+w,y,x+w,y+h,r);cx.arcTo(x+w,y+h,x,y+h,r);cx.arcTo(x,y+h,x,y,r);cx.arcTo(x,y,x+w,y,r);cx.closePath()}
+function robot(a,b,S,o){
+  const col=o.col||TINTE[cfgR.col].h,fig=o.fig||cfgR.fig;
+  const dx=(o.f===1||o.f===0)?1:-1,dietro=(o.f===0||o.f===3);
+  const sq=o.sq||1,W=S*.86/sq,H=S*.60*sq;
+  cx.save();cx.translate(a,b);cx.lineJoin="round";cx.lineWidth=Math.max(1.5,S*.05);cx.strokeStyle="rgba(10,7,26,.68)";
+  const B=(x,y,w,h,r,f)=>{rr(x,y,w,h,r);cx.fillStyle=f;cx.fill();cx.stroke()};
+  if(fig==="cingolo"){
+    B(-W*.52,-H*.46,W*1.04,H*.46,H*.17,"#333a4a");
+    for(let i=0;i<5;i++)B(-W*.46+i*W*.20,-H*.42,W*.10,H*.36,W*.03,"#4a5266");
+    B(-W*.42,-H*.90,W*.84,H*.46,W*.10,col);
+    B(-W*.26,-H*1.20,W*.52,H*.34,W*.10,dk(col,1.12));
+  } else if(fig==="drone"){
+    const hov=Math.sin((o.tm||0)/180)*S*.03;cx.translate(0,hov);
+    for(const k of [-1,1]){B(k*W*.42-W*.09,-H*.98,W*.18,H*.16,W*.06,"#4b5162");
+      cx.save();cx.globalAlpha=.4;cx.fillStyle="#cfe9ff";
+      cx.beginPath();cx.ellipse(k*W*.42,-H*1.04,W*.28,W*.05,0,0,7);cx.fill();cx.restore()}
+    B(-W*.36,-H*.96,W*.72,H*.60,W*.24,col);
+    B(-W*.26,-H*1.18,W*.52,H*.26,W*.10,dk(col,1.12));
+  } else if(fig==="quad"){
+    for(const k of [-1,1])for(const j of [-1,1]){
+      ell(k*W*.38,-H*.14+j*H*.05,S*.10,S*.10,"#2b3140");
+      cx.beginPath();cx.arc(k*W*.38,-H*.14+j*H*.05,S*.10,0,7);cx.stroke()}
+    B(-W*.44,-H*.72,W*.88,H*.50,W*.14,col);
+    B(-W*.24,-H*1.06,W*.48,H*.34,W*.12,dk(col,1.12));
+  } else {
+    for(const k of [-1,1]){ell(k*W*.36,-H*.16,S*.13,S*.13,"#2b3140");
+      cx.beginPath();cx.arc(k*W*.36,-H*.16,S*.13,0,7);cx.stroke();
+      ell(k*W*.36,-H*.16,S*.05,S*.05,"#7b8497")}
+    cx.beginPath();cx.moveTo(-W*.46,-H*.28);cx.lineTo(-W*.34,-H*.88);cx.lineTo(W*.34,-H*.88);cx.lineTo(W*.46,-H*.28);
+    cx.closePath();cx.fillStyle=col;cx.fill();cx.stroke();
+    B(-W*.28,-H*1.18,W*.56,H*.34,W*.10,dk(col,1.14));
+  }
+  if(!dietro){const x=dx>0?-W*.12:-W*.24;
+    rr(x,-H*1.10,W*.36,H*.18,H*.08);
+    const g=cx.createLinearGradient(x,-H*1.10,x+W*.36,-H*.92);
+    g.addColorStop(0,"#eafcff");g.addColorStop(.5,"#25e0ff");g.addColorStop(1,"#0a6b8f");
+    cx.fillStyle=g;cx.fill();cx.stroke()}
+  else B(-W*.18,-H*1.10,W*.36,H*.18,W*.06,dk(col,.6));
+  cx.beginPath();cx.moveTo(dx*W*.20,-H*1.18);cx.lineTo(dx*W*.26,-H*1.48);cx.stroke();
+  ell(dx*W*.26,-H*1.52,S*.055,S*.055,o.spia?"#ffe066":"#6b7280");
+  if(o.spia){cx.save();cx.globalAlpha=.5;ell(dx*W*.26,-H*1.52,S*.13,S*.13,"#ffe066");cx.restore()}
+  let ox=dx>0?W*.42:-W*.60;
+  if(o.est>0){B(ox,-H*.60,W*.18,H*.34,W*.07,"#ef4444");ox+=dx*W*.22}
+  if(o.chiavi>0)B(ox,-H*.52,W*.16,H*.20,W*.06,"#fbbf24");
+  cx.restore()}
+function cassa(x,y){cubo(x+.06,y+.06,0,.88,.88,.46,"#c98b3f");cubo(x+.14,y+.14,.46,.72,.72,.04,"#e0a85c")}
+function portaO(x,y){cubo(x+.04,y+.30,0,.14,.42,.66,"#6d4aa8");cubo(x+.82,y+.30,0,.14,.42,.66,"#6d4aa8");
+  cubo(x+.18,y+.36,0,.64,.30,.60,"#8b5cf6");cubo(x+.66,y+.62,.28,.09,.09,.09,"#ffd24a")}
+function fuocoO(x,y,tm){
+  const p0=Pf(x+.5,y+.5,0);
+  const g=cx.createRadialGradient(p0[0],p0[1]-st.TW*.2,2,p0[0],p0[1]-st.TW*.2,st.TW);
+  g.addColorStop(0,"rgba(255,160,50,.4)");g.addColorStop(1,"rgba(255,120,30,0)");
+  cx.fillStyle=g;cx.beginPath();cx.arc(p0[0],p0[1]-st.TW*.2,st.TW,0,7);cx.fill();
+  cubo(x+.10,y+.10,0,.80,.80,.08,"#4a1f16");
+  const fl=(k,col,sc)=>{const w=Math.sin(tm/110+x*2.3+y*1.7+k)*.06;
+    const p=Pf(x+.5,y+.5,.08+k*.14);
+    cx.beginPath();cx.moveTo(p[0]-st.TW*sc*.5,p[1]);
+    cx.quadraticCurveTo(p[0]-st.TW*sc*.42,p[1]-st.TW*(sc+w)*.9,p[0],p[1]-st.TW*(sc+w)*1.5);
+    cx.quadraticCurveTo(p[0]+st.TW*sc*.42,p[1]-st.TW*(sc+w)*.9,p[0]+st.TW*sc*.5,p[1]);
+    cx.closePath();cx.fillStyle=col;cx.fill()};
+  fl(0,"#f0521f",.44);fl(1,"#fb923c",.30);fl(2,"#ffe066",.17)}
+function oggO(x,y,tm,tipo){
+  const b=Math.sin(tm/340+x*2+y)*st.TW*.06,p=Pf(x+.5,y+.5,.10),T=st.TW;
+  ell(p[0],p[1]+st.TH*.16,T*.20,st.TH*.20,"rgba(0,0,0,.32)");
+  const gc=tipo==="est"?"239,68,68":"251,191,36";
+  const g=cx.createRadialGradient(p[0],p[1]-T*.2+b,2,p[0],p[1]-T*.2+b,T*.55);
+  g.addColorStop(0,"rgba("+gc+",.4)");g.addColorStop(1,"rgba("+gc+",0)");
+  cx.fillStyle=g;cx.beginPath();cx.arc(p[0],p[1]-T*.2+b,T*.55,0,7);cx.fill();
+  cx.save();cx.translate(p[0],p[1]-T*.18+b);cx.lineWidth=1.6;cx.strokeStyle="rgba(10,7,26,.6)";
+  if(tipo==="est"){rr(-T*.10,-T*.24,T*.20,T*.38,T*.08);cx.fillStyle="#ef4444";cx.fill();cx.stroke();
+    rr(-T*.08,-T*.31,T*.16,T*.08,T*.03);cx.fillStyle="#e5e7eb";cx.fill();cx.stroke()}
+  else{cx.beginPath();cx.arc(0,-T*.15,T*.10,0,7);cx.fillStyle="#fbbf24";cx.fill();cx.stroke();
+    rr(-T*.03,-T*.07,T*.06,T*.30,T*.02);cx.fillStyle="#fbbf24";cx.fill();cx.stroke()}
+  cx.restore()}
+function bandO(x,y,tm){
+  const b=Pf(x+.5,y+.5,0),alt=st.TW*1.15;
+  const g=cx.createRadialGradient(b[0],b[1],2,b[0],b[1],st.TW);
+  g.addColorStop(0,"rgba(255,210,74,.34)");g.addColorStop(1,"rgba(255,210,74,0)");
+  cx.fillStyle=g;cx.beginPath();cx.arc(b[0],b[1],st.TW,0,7);cx.fill();
+  cx.strokeStyle="rgba(10,7,26,.6)";cx.lineWidth=Math.max(2,st.TW*.055);
+  cx.beginPath();cx.moveTo(b[0],b[1]);cx.lineTo(b[0],b[1]-alt);cx.stroke();
+  const w=Math.sin(tm/220)*st.TW*.06;
+  cx.beginPath();cx.moveTo(b[0],b[1]-alt);
+  cx.quadraticCurveTo(b[0]+st.TW*.28,b[1]-alt+w,b[0]+st.TW*.54,b[1]-alt+st.TW*.10);
+  cx.quadraticCurveTo(b[0]+st.TW*.28,b[1]-alt+st.TW*.24+w,b[0],b[1]-alt+st.TW*.32);
+  cx.closePath();cx.fillStyle="#ffd24a";cx.fill();cx.lineWidth=1.4;cx.stroke()}
+
+/* la traccia: il cuore di tutto */
+function traccia(prev,tm){
+  if(prev.passi.length<2)return;
+  const pts=prev.passi.map(p=>Pf(p.x+.5,p.y+.5,.04));
+  cx.save();
+  cx.setLineDash([7,6]);cx.lineDashOffset=-(tm/28)%13;
+  cx.strokeStyle="rgba(255,255,255,.85)";cx.lineWidth=Math.max(2.5,st.TW*.075);
+  cx.lineJoin="round";cx.lineCap="round";
+  cx.beginPath();cx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++)cx.lineTo(pts[i][0],pts[i][1]);
+  cx.stroke();cx.setLineDash([]);
+  prev.passi.forEach(p=>p.fx.forEach(e=>{
+    if(e.t==="urto"){const q=Pf(e.x+.5,e.y+.5,.06);
+      cx.strokeStyle="#ff5a4a";cx.lineWidth=Math.max(3,st.TW*.09);
+      const r=st.TW*.20;
+      cx.beginPath();cx.moveTo(q[0]-r,q[1]-r*.5);cx.lineTo(q[0]+r,q[1]+r*.5);
+      cx.moveTo(q[0]+r,q[1]-r*.5);cx.lineTo(q[0]-r,q[1]+r*.5);cx.stroke()}}));
+  const f=prev.passi[prev.passi.length-1];
+  const q=Pf(f.x+.5,f.y+.5,.05);
+  const ok=prev.esito==="ok";
+  cx.strokeStyle=ok?"#2ee39a":"#ffd24a";cx.lineWidth=3;
+  cx.save();cx.translate(q[0],q[1]);cx.scale(1,.5);
+  cx.beginPath();cx.arc(0,0,st.TW*(.34+.05*Math.sin(tm/220)),0,7);cx.stroke();cx.restore();
+  cx.restore()}
+
+function boom(x,y,n,col,sp){const c=Pf(x+.5,y+.5,.25);
+  for(let i=0;i<n;i++){const a=Math.random()*7,v=(.4+Math.random())*sp;
+    part.push({x:c[0],y:c[1],vx:Math.cos(a)*v,vy:Math.sin(a)*v*.55-v*.5,l:1,col})}}
+function testo(x,y,t,col){const c=Pf(x+.5,y+.5,.9);testi.push({x:c[0],y:c[1],t,col,l:1})}
+function fxStep(dt){
+  const W=stg.clientWidth||340,H=W*.8;
+  coriandoli=coriandoli.filter(c=>{c.x+=c.vx;c.y+=c.vy;c.vy+=.035;c.a+=c.va;c.l-=.0035;
+    return c.l>0&&c.y<H+40});
+  if(lampo){lampo.l-=dt*.0018;if(lampo.l<=0)lampo=null}
+  part=part.filter(p=>{p.x+=p.vx*dt*.06;p.y+=p.vy*dt*.06;p.vy+=dt*.012;p.l-=dt*.0024;return p.l>0});
+  testi=testi.filter(t=>{t.y-=dt*.035;t.l-=dt*.0015;return t.l>0});shake*=Math.pow(.9,dt/16)}
+function fxDraw(){part.forEach(p=>{cx.globalAlpha=cl(p.l,0,1);cx.fillStyle=p.col;
+    cx.beginPath();cx.arc(p.x,p.y,2+p.l*2.4,0,7);cx.fill()});cx.globalAlpha=1;
+  testi.forEach(t=>{cx.globalAlpha=cl(t.l*1.4,0,1);cx.textAlign="center";
+    cx.font="900 "+Math.round(st.TW*.4)+"px sans-serif";cx.lineWidth=4;cx.strokeStyle="rgba(10,7,26,.75)";
+    cx.strokeText(t.t,t.x,t.y);cx.fillStyle=t.col;cx.fillText(t.t,t.x,t.y)});cx.globalAlpha=1}
+
+let prev=null,fattiFx=new Set(),finale=null,coriandoli=[],lampo=null;
+function sparaCoriandoli(n){
+  const W=stg.clientWidth||340,H=W*.8;
+  for(let i=0;i<n;i++)coriandoli.push({x:Math.random()*W,y:-20-Math.random()*H*.6,
+    vx:(Math.random()-.5)*2.4,vy:2+Math.random()*3.4,r:3+Math.random()*5,a:Math.random()*7,
+    va:(Math.random()-.5)*.3,l:1,col:["#2ee39a","#ffd24a","#ff6fae","#3dbdf5","#ffb43b","#c3f53d"][i%6]})}
+function flash(col){lampo={col,l:1}}
+function calcola(){prev=esegui(campo(),prog,900);aggiornaVerdetto();salvaProg();
+  if(modo==="arena")renderArena();
+  if(modo==="lab"){provaTutti();renderLab()}}
+function aggiornaVerdetto(){
+  const v=document.getElementById('verdetto');
+  if(anim){v.textContent="";return}
+  if(!prog.length){v.textContent="";return}
+  if(prev.esito==="ok"){v.textContent="la linea arriva alla bandiera · premi VAI";v.style.color="#2ee39a"}
+  else{const urti=prev.passi.reduce((a,p)=>a+p.fx.filter(e=>e.t==="urto").length,0);
+    v.textContent=urti?"sbatte "+urti+(urti===1?" volta":" volte"):"la linea si ferma prima";v.style.color="#ffd24a"}}
+
+function disegna(tm){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const W=stg.clientWidth||340,H=W*.8;
+  stg.width=W*dpr;stg.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0);
+  const g=cx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,"#171040");g.addColorStop(.55,"#3d1f66");g.addColorStop(1,"#a4456a");
+  cx.fillStyle=g;cx.fillRect(0,0,W,H);
+  const L=campo(),G=L.G;
+  st.TW=Math.min(W/(G+.8),(H-46)/(G*.5+2.2));st.TH=st.TW/2;st.ZU=st.TW*.62;
+  st.OX=W/2;st.OY=Math.max(H*.24,(H-G*st.TH)/2-st.TW*.4);
+  cx.save();if(shake>.2)cx.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
+  const ang=[Pf(0,0,0),Pf(G,0,0),Pf(G,G,0),Pf(0,G,0)];
+  const gg=ang.map(p=>[p[0],p[1]+1.1*st.ZU]);
+  pl([ang[3],ang[2],gg[2],gg[3]],"#4a3323",LN,1.2);
+  pl([ang[1],ang[2],gg[2],gg[1]],"#5d4029",LN,1.2);
+  for(let y=0;y<G;y++)for(let x=0;x<G;x++)tile(x,y,(x+y)%2?"#3fae58":"#379e4f",0,true);
+  const s=anim?anim.passi[Math.min(iA,anim.passi.length-1)]:(prev?prev.passi[0]:null);
+  const sp=anim?anim.passi[Math.max(0,iA-1)]:s;
+  const fuoco=s&&s.fuoco?s.fuoco:(L.fuoco||[]);
+  const porta=s&&s.porta?s.porta:(L.porta||[]);
+  const ogE=s&&s.ogE?s.ogE:(L.est||[]);
+  const ogC=s&&s.ogC?s.ogC:(L.chiave||[]);
+  const og=[];
+  (L.muri||[]).forEach(k=>{const[x,y]=k.split(',').map(Number);og.push({x,y,f:()=>cassa(x,y)})});
+  porta.forEach(k=>{const[x,y]=k.split(',').map(Number);og.push({x,y,f:()=>portaO(x,y)})});
+  fuoco.forEach(k=>{const[x,y]=k.split(',').map(Number);og.push({x,y,f:()=>fuocoO(x,y,tm)})});
+  ogE.forEach(k=>{const[x,y]=k.split(',').map(Number);og.push({x,y,f:()=>oggO(x,y,tm,"est")})});
+  ogC.forEach(k=>{const[x,y]=k.split(',').map(Number);og.push({x,y,f:()=>oggO(x,y,tm,"chi")})});
+  og.push({x:L.band[0],y:L.band[1],f:()=>bandO(L.band[0],L.band[1],tm)});
+  og.sort((a,b)=>(a.x+a.y)-(b.x+b.y)).forEach(o=>o.f());
+  if(s){
+    /* casella sotto il robot: sempre riconoscibile */
+    cx.globalAlpha=.55;tile(s.x,s.y,"#2ee39a",.012);cx.globalAlpha=1;
+    const q=Pf(s.x+.5,s.y+.5,.02);
+    cx.save();cx.translate(q[0],q[1]);cx.scale(1,.5);
+    cx.strokeStyle="#2ee39a";cx.lineWidth=3;cx.globalAlpha=.9;
+    cx.beginPath();cx.arc(0,0,st.TW*(.40+.04*Math.sin(tm/300)),0,7);cx.stroke();cx.restore();cx.globalAlpha=1;
+    /* casella davanti: dove finirebbe il prossimo avanti */
+    const d=DIRS[s.f],nx=s.x+d[0],ny=s.y+d[1],L2=campo();
+    if(nx>=0&&ny>=0&&nx<L2.G&&ny<L2.G){
+      const occ=(L2.muri||[]).includes(nx+','+ny)||(s.fuoco||[]).includes(nx+','+ny)||(s.porta||[]).includes(nx+','+ny);
+      cx.globalAlpha=.42;tile(nx,ny,occ?"#ff5a4a":"#ffffff",.010);cx.globalAlpha=1}
+  }
+  if(!anim&&prev)traccia(prev,tm);
+  if(s){
+    const lp=(a,b)=>a+(b-a)*eo(fA);
+    const px=anim?lp(sp.x,s.x):s.x, py=anim?lp(sp.y,s.y):s.y;
+    const mosso=anim&&(sp.x!==s.x||sp.y!==s.y);
+    const c0=Pf(px+.5,py+.5,0),cz=Pf(px+.5,py+.5,mosso?Math.sin(fA*Math.PI)*.13:0);
+    ell(c0[0],c0[1],st.TW*.30,st.TH*.30,"rgba(0,0,0,.4)");
+    robot(cz[0],cz[1],st.TW*1.0,{f:s.f,est:s.est,chiavi:s.chiavi,spia:s.spia,sq:mosso?1+Math.sin(fA*Math.PI)*.10:1})}
+  if(rivale&&anim){
+    const j=Math.min(iA,rivale.passi.length-1),jp=Math.max(0,j-1);
+    const a=rivale.passi[j],b=rivale.passi[jp];
+    const lp2=(u,v)=>u+(v-u)*eo(fA);
+    const rx=lp2(b.x,a.x),ry=lp2(b.y,a.y);
+    const c1=Pf(rx+.5,ry+.5,0);
+    cx.save();cx.globalAlpha=.55;
+    ell(c1[0],c1[1],st.TW*.26,st.TH*.26,"rgba(0,0,0,.35)");
+    robot(c1[0],c1[1],st.TW*.95,{f:a.f,est:0,chiavi:0,col:"#ff5c7a",fig:"cingolo",tm:tm});
+    cx.restore()}
+  fxDraw();cx.restore();
+  const W2=stg.clientWidth||340,H2=W2*.8;
+  coriandoli.forEach(c=>{cx.save();cx.globalAlpha=cl(c.l,0,1);cx.translate(c.x,c.y);cx.rotate(c.a);
+    cx.fillStyle=c.col;cx.fillRect(-c.r/2,-c.r/2,c.r,c.r*1.7);cx.restore()});
+  if(lampo){cx.save();cx.globalAlpha=cl(lampo.l,0,1)*.45;cx.fillStyle=lampo.col;
+    cx.fillRect(0,0,W2,H2);cx.restore()}
+  if(finale){
+    const el=(tm-finale.t0)/700,ok=finale.tipo==="ok";
+    const k=el<1?1+(1-eo(cl(el,0,1)))*2.2:1+Math.sin(tm/420)*.03;
+    const rot=ok?Math.sin(tm/520)*.03:(el<1?(1-eo(cl(el,0,1)))*.35:.0);
+    cx.save();cx.translate(W2/2,H2*.44);cx.rotate(rot);cx.scale(k,k);
+    cx.textAlign="center";
+    cx.font="900 "+Math.round(Math.min(46,W2*.13))+"px sans-serif";
+    cx.lineWidth=9;cx.strokeStyle="rgba(8,6,22,.85)";
+    const t1=finale.titolo;
+    cx.strokeText(t1,0,0);
+    const g2=cx.createLinearGradient(0,-30,0,16);
+    if(ok){g2.addColorStop(0,"#b9ffe0");g2.addColorStop(1,"#0fb57a")}
+    else{g2.addColorStop(0,"#ffc9c2");g2.addColorStop(1,"#d63b2c")}
+    cx.fillStyle=g2;cx.fillText(t1,0,0);
+    if(finale.sotto){cx.font="800 "+Math.round(Math.min(17,W2*.045))+"px sans-serif";
+      cx.lineWidth=5;cx.strokeStyle="rgba(8,6,22,.8)";
+      cx.strokeText(finale.sotto,0,26);cx.fillStyle="#fff";cx.fillText(finale.sotto,0,26)}
+    cx.restore()}}
+
+function loop(tm){
+  requestAnimationFrame(loop);
+  const dt=Math.min(64,tm-(ultimo||tm));ultimo=tm;fxStep(dt);
+  if(anim){
+    fA+=dt/230;
+    if(fA>.45&&!fattiFx.has(iA)){fattiFx.add(iA);
+      (anim.passi[iA].fx||[]).forEach(e=>{
+        if(e.t==="urto"){boom(e.x,e.y,8,"#ff8a6b",2.2);shake=Math.max(shake,6);testo(e.x,e.y,"BONK","#ff8a6b")}
+        if(e.t==="usa"){boom(e.x,e.y,20,"#e8f4ff",3);shake=Math.max(shake,5);testo(e.x,e.y,e.e,"#bfe9ff")}
+        if(e.t==="vuoto")testo(e.x,e.y,"niente da usare","#d6d6e0");
+        if(e.t==="presa"){boom(e.x,e.y,12,"#ffd24a",2.4);testo(e.x,e.y,e.e,"#ffd24a")}})}
+    while(fA>=1){
+      if(iA<anim.passi.length-1){iA++;fA-=1;evid()}
+      else{fA=1;finisci();break}}}
+  disegna(tm)}
+function evid(){
+  document.querySelectorAll('.bl.ora').forEach(e=>e.classList.remove('ora'));
+  const id=anim.passi[iA].id;
+  if(id!=null){const el=document.querySelector('.bl[data-id="'+id+'"]');if(el)el.classList.add('ora')}}
+function finisci(){
+  const ok=anim.esito==="ok";
+  const v=document.getElementById('verdetto');
+  const L=campo();
+  if(ok){v.textContent="";
+    boom(L.band[0],L.band[1],46,"#ffd24a",4.4);
+    setTimeout(()=>boom(L.band[0],L.band[1],28,"#2ee39a",5),140);
+    shake=Math.max(shake,13);flash("#2ee39a");sparaCoriandoli(110);
+    finale={tipo:"ok",t0:performance.now(),titolo:"ARRIVATO!",sotto:contaBlocchi(prog)+" blocchi"};
+    if(modo==="tut"&&!fatti.includes(lv)){fatti.push(lv);salva();renderLivelli();renderFine();sbloccaTabs()}}
+  else{v.textContent="";shake=Math.max(shake,9);flash("#d63b2c");
+    finale={tipo:"ko",t0:performance.now(),
+      titolo:anim.esito==="lungo"?"GIRA A VUOTO":"NON CI ARRIVA",
+      sotto:anim.esito==="lungo"?"il programma non finisce mai":"finite le istruzioni"}}
+  if(modo==="arena")finGara();
+  if(modo==="lab"){provaTutti();renderLab()}
+  anim=null;document.querySelectorAll('.bl.ora').forEach(e=>e.classList.remove('ora'))}
+document.getElementById('play').onclick=()=>{
+  if(!prog.length)return;
+  fermaCrono();finale=null;coriandoli=[];
+  anim=esegui(campo(),prog,900);iA=0;fA=0;fattiFx=new Set();part=[];testi=[];
+  if(modo==="arena")preparaRivale();
+  document.getElementById('verdetto').textContent=""};
+document.getElementById('stop').onclick=()=>{anim=null;fattiFx=new Set();
+  document.querySelectorAll('.bl.ora').forEach(e=>e.classList.remove('ora'));aggiornaVerdetto()};
+
+/* ===================================== programma */
+const NOMI={avanti:["👟","avanti","m"],dx:["↻","gira a destra","m"],sx:["↺","gira a sinistra","m"],
+  usa:["🛠","usa l'attrezzo","u"],ripeti:["🔁","ripeti","c"],finche:["🔁","ripeti finché","c"],
+  se:["❓","se","c"],sempre:["♾","sempre","c"],
+  accendi:["💡","accendi la spia","m"],spegnispia:["🌑","spegni la spia","m"]};
+function slotHtml(l,i){
+  const att=cursore&&cursore.l===l&&cursore.i===i;
+  return `<div class="slot ${att?'attivo':''}" data-slot="1"></div>`}
+function listaHtml(l){
+  let h=`<div class="lista">`;
+  for(let i=0;i<l.length;i++){h+=slotHtml(l,i);h+=bloccoHtml(l[i])}
+  h+=slotHtml(l,l.length);
+  return h+`</div>`}
+function bloccoHtml(n){
+  const [ic,nm,cls]=NOMI[n.t];
+  if(n.t==="ripeti")return `<div><div class="bl c" data-id="${n.id}"><span class="ic">${ic}</span>
+    <span>ripeti</span><span class="val" data-cicla="n" data-id="${n.id}">${n.n} volte</span>
+    <span class="sp"></span><button class="x" data-rm="${n.id}">✕</button></div>
+    <div class="dentro">${listaHtml(n.body)}</div><div class="bl c piede"></div></div>`;
+  if(n.t==="finche")return `<div><div class="bl c" data-id="${n.id}"><span class="ic">${ic}</span>
+    <span>ripeti finché</span><span class="val" data-cicla="c" data-id="${n.id}">${n.c==="libero"?"la strada è libera":"la strada è bloccata"}</span>
+    <span class="sp"></span><button class="x" data-rm="${n.id}">✕</button></div>
+    <div class="dentro">${listaHtml(n.body)}</div><div class="bl c piede"></div></div>`;
+  if(n.t==="sempre")return `<div><div class="bl c" data-id="${n.id}"><span class="ic">♾</span>
+    <span>ripeti per sempre</span><span class="sp"></span><button class="x" data-rm="${n.id}">✕</button></div>
+    <div class="dentro">${listaHtml(n.body)}</div><div class="bl c piede"></div></div>`;
+  if(n.t==="se")return `<div><div class="bl c" data-id="${n.id}"><span class="ic">❓</span>
+    <span>se</span><span class="val" data-cicla="sens" data-id="${n.id}">${SENSORI[n.c]}</span>
+    <span class="val" data-cicla="op" data-id="${n.id}" style="background:rgba(255,255,255,.28);color:#fff">${OPLOG[n.op||"base"]}</span>
+    ${(n.op&&n.op!=="base")?`<span class="val" data-cicla="sens2" data-id="${n.id}">${SENSORI[n.c2]}</span>`:""}
+    <span class="sp"></span><button class="x" data-alt="${n.id}">${n.alt?"–":"+"} altrimenti</button>
+    <button class="x" data-rm="${n.id}">✕</button></div>
+    <div class="dentro">${listaHtml(n.body)}</div>
+    ${n.alt?`<div style="color:#fff;font-weight:900;font-size:12.5px;padding:3px 0 3px 14px">altrimenti</div>
+      <div class="dentro">${listaHtml(n.alt)}</div>`:''}
+    <div class="bl c piede"></div></div>`;
+  return `<div class="bl ${cls}" data-id="${n.id}"><span class="ic">${ic}</span><span>${nm}</span>
+    <span class="sp"></span><button class="x" data-rm="${n.id}">✕</button></div>`}
+let mappaSlot=[];
+function renderProg(){
+  mappaSlot=[];
+  const el=document.getElementById('prog');
+  el.innerHTML=prog.length?listaHtml(prog):`<div class="vuoto">Tocca un blocco qui sotto per cominciare</div>`+listaHtml(prog);
+  void 0;
+  /* collego gli slot nell'ordine in cui sono stati generati */
+  const slots=[...el.querySelectorAll('.slot')];
+  let k=0;
+  const registra=l=>{for(let i=0;i<l.length;i++){mappaSlot[k++]={l,i};
+      if(l[i].body)registra(l[i].body)}
+    mappaSlot[k++]={l,i:l.length}};
+  /* l'ordine del DOM: slot0, blocco0, [dentro...], slot1, ... quindi ricalcolo con lo stesso attraversamento */
+  mappaSlot=[];k=0;
+  const walk=l=>{for(let i=0;i<l.length;i++){mappaSlot.push({l,i});
+      if(l[i].body)walk(l[i].body);
+      if(l[i].alt)walk(l[i].alt)}
+    mappaSlot.push({l,i:l.length})};
+  walk(prog);
+  slots.forEach((s,i)=>{if(mappaSlot[i]){s.dataset.k=i;
+    if(cursore&&cursore.l===mappaSlot[i].l&&cursore.i===mappaSlot[i].i)s.classList.add('attivo')}})}
+function renderPalette(){
+  const L=campo();
+  document.getElementById('palette').innerHTML=`<div>`+L.blocchi.map(t=>{
+    const [ic,nm,cls]=NOMI[t];
+    return `<button class="${cls}" data-add="${t}">${ic} ${nm}</button>`}).join("")+`</div>`}
+document.getElementById('palette').onclick=e=>{
+  const b=e.target.closest('[data-add]');if(!b)return;
+  const n=conId(nuovo(b.dataset.add));
+  const c=cursore&&mappaSlot.some(m=>m.l===cursore.l)?cursore:{l:prog,i:prog.length};
+  c.l.splice(c.i,0,n);
+  cursore={l:n.body?n.body:c.l,i:n.body?0:c.i+1};
+  renderProg();calcola()};
+document.getElementById('prog').onclick=e=>{
+  const v=e.target.closest('[data-cicla]');
+  if(v){const id=+v.dataset.id;
+    const tr=l=>{for(const n of l){if(n.id===id)return n;if(n.body){const r=tr(n.body);if(r)return r}
+      if(n.alt){const r=tr(n.alt);if(r)return r}}return null};
+    const n=tr(prog);if(!n)return;
+    if(v.dataset.cicla==="n"){const seq=[2,3,4,5,6,8,10];n.n=seq[(seq.indexOf(n.n)+1)%seq.length]}
+    else if(v.dataset.cicla==="sens"){n.c=ORDSENS[(ORDSENS.indexOf(n.c)+1)%ORDSENS.length]}
+    else if(v.dataset.cicla==="sens2"){n.c2=ORDSENS[(ORDSENS.indexOf(n.c2)+1)%ORDSENS.length]}
+    else if(v.dataset.cicla==="op"){n.op=ORDOP[(ORDOP.indexOf(n.op||"base")+1)%ORDOP.length]}
+    else n.c=(n.c==="libero")?"bloccato":"libero";
+    renderProg();calcola();return}
+  const s=e.target.closest('.slot');
+  if(s){const m=mappaSlot[+s.dataset.k];if(m){cursore={l:m.l,i:m.i};renderProg()}return}
+  const al=e.target.closest('[data-alt]');
+  if(al){const id=+al.dataset.alt;
+    const tr=l=>{for(const n of l){if(n.id===id)return n;if(n.body){const r=tr(n.body);if(r)return r}
+      if(n.alt){const r=tr(n.alt);if(r)return r}}return null};
+    const n=tr(prog);if(n){n.alt=n.alt?null:[];renderProg();calcola()}return}
+  const rm=e.target.closest('[data-rm]');
+  if(rm){const id=+rm.dataset.rm;
+    const tog=l=>{for(let i=0;i<l.length;i++){if(l[i].id===id){l.splice(i,1);return true}
+      if(l[i].body&&tog(l[i].body))return true;
+      if(l[i].alt&&tog(l[i].alt))return true}return false};
+    tog(prog);cursore=null;renderProg();calcola();return}
+  const bl=e.target.closest('.bl[data-id]');
+  if(bl){const id=+bl.dataset.id;
+    const tr=l=>{for(let i=0;i<l.length;i++){if(l[i].id===id)return {l,i:i+1};
+      if(l[i].body){const r=tr(l[i].body);if(r)return r}
+      if(l[i].alt){const r=tr(l[i].alt);if(r)return r}}return null};
+    const p=tr(prog);if(p){cursore=p;renderProg()}}};
+
+
+/* ===================================== livelli */
+function renderLivelli(){
+  document.getElementById('livelli').innerHTML=LIVELLI.map((L,i)=>{
+    const ap=i===0||fatti.includes(i-1)||fatti.includes(i);
+    return `<div class="lv ${i===lv?'on':''} ${fatti.includes(i)?'fatto':''} ${ap?'':'chiuso'}" data-i="${i}">${i+1}</div>`}).join("")}
+document.getElementById('livelli').onclick=e=>{
+  const d=e.target.closest('.lv');if(!d)return;
+  const i=+d.dataset.i;
+  if(!(i===0||fatti.includes(i-1)||fatti.includes(i)))return;
+  vai(i)};
+function renderFine(){
+  const el=document.getElementById('fine');
+  if(fatti.includes(lv)&&lv<LIVELLI.length-1)
+    el.innerHTML=`<div class="vinta"><b>✓ Livello superato</b><button id="next">Livello successivo →</button></div>`,
+    document.getElementById('next').onclick=()=>vai(lv+1);
+  else if(fatti.includes(lv))el.innerHTML=`<div class="vinta"><b>✓ Finito tutto. Bravo.</b></div>`;
+  else el.innerHTML=""}
+function vai(i){
+  lv=i;cursore=null;anim=null;part=[];testi=[];finale=null;caricaProg();salva();
+  const L=LIVELLI[lv];
+  document.getElementById('lvNome').textContent="livello "+(lv+1)+" · "+L.n;
+  document.getElementById('lvGoal').textContent=L.goal;
+  document.getElementById('nota').innerHTML="<b>come si fa</b>"+L.nota;
+  renderLivelli();renderPalette();renderProg();renderFine();calcola();
+  window.scrollTo({top:0,behavior:'smooth'})}
+
+/* =========================== modalità =========================== */
+let rivale=null,esitoGara=null;
+function tabAperto(){return true}
+function sbloccaTabs(){
+  [...document.querySelectorAll('#tabs button,#tabs2 button')].forEach(b=>{
+    const m=b.dataset.m;
+    b.classList.toggle('lock',false);
+    b.classList.toggle('on',m===modo)})}
+function cambiaModo(m){
+  if(!tabAperto(m)){nota(m==="lab"?"Il laboratorio si apre dopo la tua prima gara in Arena.":"Finisci almeno 4 livelli del tutorial per aprire questa parte.");return}
+  modo=m;rivale=null;anim=null;esitoGara=null;cursore=null;finale=null;fermaCrono();
+  document.getElementById('vistaOff').style.display=m==="off"?"":"none";
+  document.querySelector('.wrap').style.display=m==="off"?"none":"";
+  sbloccaTabs();
+  if(m==="tut")vai(lv);
+  else if(m==="arena")vaiArena(ar);
+  else if(m==="lab")vaiLab(labF);
+  else renderOfficina();
+  window.scrollTo({top:0,behavior:'smooth'})}
+document.getElementById('tabs').onclick=e=>{const b=e.target.closest('button');if(b)cambiaModo(b.dataset.m)};
+document.getElementById('tabs2').onclick=e=>{const b=e.target.closest('button');if(b)cambiaModo(b.dataset.m)};
+function nota(t){document.getElementById('nota').innerHTML="<b>nota</b>"+t}
+
+/* =========================== cronometro =========================== */
+let crono=null,minuti=3;
+function fermaCrono(){if(crono&&crono.h)clearInterval(crono.h);crono=null;
+  const e=document.getElementById('cronoStage');if(e)e.textContent=""}
+function avviaCrono(){
+  fermaCrono();
+  crono={fine:Date.now()+minuti*60000,h:null};
+  crono.h=setInterval(()=>{
+    const r=Math.max(0,Math.ceil((crono.fine-Date.now())/1000));
+    const t=Math.floor(r/60)+":"+String(r%60).padStart(2,"0");
+    const e=document.getElementById('cronoStage');
+    if(e){e.textContent="⏱ "+t;e.style.color=r<=10?"#ff8a8a":r<=30?"#ffd24a":"#fff"}
+    if(modo==="arena")renderArena();
+    if(r<=0){fermaCrono();document.getElementById('play').click()}},250)}
+
+/* =========================== arena =========================== */
+const HAND={facile:14,medio:6,tosto:1};
+function vaiArena(i){
+  ar=i;cursore=null;anim=null;rivale=null;esitoGara=null;finale=null;caricaProg();
+  document.getElementById('livelli').innerHTML=ARENE.map((A,k)=>
+    `<div class="lv ${k===ar?'on':''} ${recordA[k]?'fatto':''}" data-a="${k}">${k+1}</div>`).join("");
+  document.getElementById('lvNome').textContent="arena "+(ar+1)+" · "+ARENE[ar].n;
+  document.getElementById('lvGoal').textContent="Arriva alla bandiera in meno battiti del rivale.";
+  document.getElementById('nota').innerHTML="<b>come si vince</b>Due gare in una. <b>Contro il rivale</b> vince chi arriva in meno battiti: ogni avanti e ogni giro è un battito. <b>La medaglia</b> invece guarda quanti <b>blocchi</b> hai usato: incollare cinquanta avanti funziona ma non vale niente, il bello è dire la stessa strada con pochi blocchi usando ripeti e finché.";
+  document.getElementById('fine').innerHTML="";
+  renderPalette();renderProg();renderArena();calcola()}
+document.getElementById('livelli').addEventListener('click',e=>{
+  const d=e.target.closest('[data-a]');if(!d||modo!=="arena")return;vaiArena(+d.dataset.a)});
+const PARB=[11,23,20,14,28];   /* blocchi della soluzione compressa, verificata a simulazione */
+function medaglia(nb,parb){if(nb<=parb)return "oro";if(nb<=parb+3)return "argento";if(nb<=parb+10)return "bronzo";return null}
+const EMO={oro:"🥇",argento:"🥈",bronzo:"🥉"};
+function contaBlocchi(l){let n=0;for(const x of l){n++;if(x.body)n+=contaBlocchi(x.body);if(x.alt)n+=contaBlocchi(x.alt)}return n}
+function renderArena(){
+  if(modo!=="arena")return;
+  const parb=PARB[ar],nb=contaBlocchi(prog),rec=recordA[ar];
+  const arriva=prev&&prev.esito==="ok";
+  const med=arriva?medaglia(nb,parb):null;
+  const sog={oro:parb,argento:parb+3,bronzo:parb+10};
+  const attivo=arriva?med:null;
+  document.getElementById('arenaPan').innerHTML=`
+    <div class="blocchiPan">
+      <div class="riga">
+        <div class="num"><b>${nb}</b><span>blocchi<br>che hai usato</span></div>
+        <div class="scala">
+          <div class="tap ${attivo==="oro"?"on":""}"><i>🥇</i>oro<span class="sp2"></span>fino a ${sog.oro}</div>
+          <div class="tap ${attivo==="argento"?"on":""}"><i>🥈</i>argento<span class="sp2"></span>fino a ${sog.argento}</div>
+          <div class="tap ${attivo==="bronzo"?"on":""}"><i>🥉</i>bronzo<span class="sp2"></span>fino a ${sog.bronzo}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);font-weight:700;margin-top:9px">
+        ${arriva?(attivo?"Arrivi alla bandiera. Togli blocchi per salire di medaglia.":
+          "Arrivi, ma con troppi blocchi: prova a sostituire le file di avanti con <b>ripeti</b> o <b>finché</b>."):
+          "La medaglia si calcola solo quando la linea arriva alla bandiera."}
+        ${rec?" · tuo record "+rec.nb+" blocchi "+(rec.m?EMO[rec.m]:""):""}
+      </div>
+    </div>
+    <div class="gara">
+      <span style="font-size:12px;font-weight:800;color:var(--muted)">rivale</span>
+      <div class="sfid">
+        ${sfidaAmico?`<button class="on">👤 ${sfidaAmico.nome} · ${sfidaAmico.b} battiti</button>
+          <button data-av="via">✕ togli</button>`:
+          ["facile","medio","tosto"].map(k=>`<button class="${avversario===k?'on':''}" data-av="${k}">🤖 ${k}</button>`).join("")}
+      </div>
+    </div>
+    <div class="timerBox">
+      <span style="font-size:12px;font-weight:800;color:var(--muted)">sfida a tempo</span>
+      <div class="sfid">
+        ${[2,3,5].map(m=>`<button class="${minuti===m?'on':''}" data-min="${m}">${m} min</button>`).join("")}
+        ${crono?`<button data-az="stop">⏹ annulla</button>`:`<button data-az="crono">⏱ via al tempo</button>`}
+      </div>
+      ${crono?`<span class="big">${Math.floor(Math.max(0,Math.ceil((crono.fine-Date.now())/1000))/60)}:${String(Math.max(0,Math.ceil((crono.fine-Date.now())/1000))%60).padStart(2,"0")}</span>`:""}
+    </div>
+    <div class="sfid" style="margin-top:8px">
+      <button data-az="copia">📤 manda la tua sfida</button>
+      <button data-az="incolla">📥 accetta una sfida</button>
+    </div>`}
+document.getElementById('arenaPan').onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.min){minuti=+b.dataset.min;renderArena();return}
+  if(b.dataset.az==="crono"){avviaCrono();renderArena();return}
+  if(b.dataset.az==="stop"){fermaCrono();renderArena();return}
+  if(b.dataset.av){if(b.dataset.av==="via")sfidaAmico=null;else avversario=b.dataset.av;renderArena();return}
+  if(b.dataset.az==="copia"){
+    if(!prev||prev.esito!=="ok"){nota("Prima falla arrivare alla bandiera, poi puoi mandarla.");return}
+    const dati={v:1,a:ar,p:prog,b:prev.passi.length-1,nome:"un amico"};
+    const cod=btoa(unescape(encodeURIComponent(JSON.stringify(dati))));
+    navigator.clipboard&&navigator.clipboard.writeText(cod);
+    document.getElementById('nota').innerHTML="<b>sfida copiata</b>Incolla questo codice al tuo amico:<textarea class='codice' rows='3' readonly>"+cod+"</textarea>";return}
+  if(b.dataset.az==="incolla"){
+    const c=prompt("Incolla qui il codice della sfida:");if(!c)return;
+    try{const d=JSON.parse(decodeURIComponent(escape(atob(c.trim()))));
+      if(d.v!==1)throw 0;
+      sfidaAmico={prog:d.p,b:d.b,nome:d.nome||"un amico"};
+      vaiArena(d.a);nota("Sfida caricata. Il fantasma rosso è il percorso del tuo amico.")}
+    catch(err){nota("Codice non valido.")}}};
+function preparaRivale(){
+  if(sfidaAmico){
+    const r=esegui(ARENE[ar],sfidaAmico.prog,900);
+    rivale={passi:r.passi,nome:sfidaAmico.nome,b:r.passi.length-1}}
+  else{const p=passiBot(ar,HAND[avversario]);
+    rivale={passi:p,nome:"bot "+avversario,b:p.length-1}}}
+function finGara(){
+  const mio=anim.esito==="ok"?anim.passi.length-1:null;
+  const suo=rivale?rivale.b:999;
+  const nb=contaBlocchi(prog),parb=PARB[ar];
+  let t="",c="#ffd24a",vinto=false;
+  if(mio===null)t="non sei arrivato alla bandiera";
+  else if(mio<suo){t="🏁 HAI VINTO · "+mio+" battiti contro "+suo;c="#2ee39a";vinto=true}
+  else if(mio===suo)t="pareggio · "+mio+" battiti";
+  else{t="hai perso · "+mio+" contro "+suo;c="#ff8a8a"}
+  const v=document.getElementById('verdetto');v.textContent="";
+  const m0=mio!==null?medaglia(nb,parb):null;
+  finale={tipo:vinto?"ok":"ko",t0:performance.now(),
+    titolo:mio===null?"NON CI ARRIVA":vinto?"VITTORIA!":(mio===suo?"PAREGGIO":"SCONFITTA"),
+    sotto:mio===null?"il rivale ha vinto a tavolino":
+      (mio+" battiti contro "+suo+"  ·  "+nb+" blocchi"+(m0?"  "+EMO[m0]:""))};
+  if(vinto){sparaCoriandoli(130);flash("#2ee39a");shake=Math.max(shake,14)}
+  else{flash("#d63b2c");shake=Math.max(shake,10)}
+  void t;void c;
+  if(mio!==null){
+    const m=medaglia(nb,parb);
+    if(!recordA[ar]||nb<recordA[ar].nb){recordA[ar]={nb,m,b:mio};salva()}
+    const nuovi=[];
+    if(vinto&&!sbloccati.includes("vinci"))nuovi.push("vinci");
+    if(m==="oro"&&!sbloccati.includes("oro"))nuovi.push("oro");
+    if(vinto&&nb<=parb-3&&!sbloccati.includes("corto"))nuovi.push("corto");
+    if(Object.keys(recordA).filter(k=>recordA[k].m).length>=3&&!sbloccati.includes("tris"))nuovi.push("tris");
+    if(nuovi.length){sbloccati.push(...nuovi);salva();
+      setTimeout(()=>nota("🔓 sbloccato in Officina: "+nuovi.map(k=>SBLK[k]).join(" ")),700)}
+    renderArena()}}
+
+/* =========================== laboratorio =========================== */
+function vaiLab(i){
+  labF=i;labP=0;cursore=null;anim=null;rivale=null;finale=null;labEsiti=[null,null,null];caricaProg();
+  document.getElementById('livelli').innerHTML=LAB.map((F,k)=>
+    `<div class="lv ${k===labF?'on':''}" data-lb="${k}">${k+1}</div>`).join("");
+  document.getElementById('lvNome').textContent="laboratorio · "+LAB[labF].n;
+  document.getElementById('lvGoal').textContent="Un programma solo, tre labirinti diversi.";
+  document.getElementById('nota').innerHTML="<b>la regola del gioco</b>"+LAB[labF].nota;
+  document.getElementById('fine').innerHTML="";
+  renderPalette();renderProg();provaTutti();renderLab()}
+document.getElementById('livelli').addEventListener('click',e=>{
+  const d=e.target.closest('[data-lb]');if(!d||modo!=="lab")return;vaiLab(+d.dataset.lb)});
+function provaTutti(){
+  if(modo!=="lab")return;
+  labEsiti=LAB[labF].prove.map(P=>{
+    if(!prog.length)return null;
+    const r=esegui(P,prog,900);
+    return {ok:r.esito==="ok",b:r.passi.length-1}})}
+function renderLab(){
+  if(modo!=="lab")return;
+  const tutte=labEsiti.every(e=>e&&e.ok);
+  document.getElementById('arenaPan').innerHTML=`
+    <div class="spie">${labEsiti.map((e,i)=>
+      `<div class="spia ${e?(e.ok?'ok':'ko'):''}" data-p="${i}"><b>${e?(e.ok?"✓":"✗"):"·"}</b>labirinto ${i+1}${labP===i?" ▸":""}</div>`).join("")}</div>
+    ${tutte?`<div class="vinta" style="margin-top:9px"><b>✓ Funziona su tutti e tre</b>
+      <span style="font-size:13px;color:var(--fg);font-weight:600">${contaBlocchi(prog)} blocchi. Hai scritto un programma che non conosce il labirinto e se la cava lo stesso.</span></div>`:""}`}
+document.getElementById('arenaPan').addEventListener('click',e=>{
+  const d=e.target.closest('[data-p]');if(!d||modo!=="lab")return;
+  labP=+d.dataset.p;anim=null;calcola();renderLab()});
+
+/* =========================== officina =========================== */
+const vet=document.getElementById('vetrina'),vx=vet.getContext('2d');
+function renderOfficina(){
+  const gr=(tit,map,ch,pall)=>{
+    const chips=Object.entries(map).map(([k,v])=>{
+      const ok=aperto(v.lk),sel=cfgR[ch]===k?' on':'',lk=ok?'':' lk';
+      const stl=pall?` style="background:${ok?v.h:'transparent'};border-color:${ok?v.h:'var(--line)'}"`:'';
+      return `<button class="chip${pall?' pall':''}${sel}${lk}" data-c="${ch}" data-k="${k}" data-lk="${v.lk||''}"${stl}>${pall?(ok?'':'🔒'):(ok?v.t:'🔒 '+v.t)}</button>`}).join("");
+    return `<div class="grp"><h4>${tit}</h4><div>${chips}</div></div>`};
+  document.getElementById('slotOff').innerHTML=gr("scocca",SCOCCHE,"fig",false)+gr("colore",TINTE,"col",true)}
+document.getElementById('slotOff').onclick=e=>{
+  const b=e.target.closest('.chip');if(!b)return;
+  const lk=b.dataset.lk;
+  if(lk&&!sbloccati.includes(lk)){document.getElementById('notaOff').innerHTML="<b>come si sblocca</b>"+SBLK[lk];return}
+  cfgR[b.dataset.c]=b.dataset.k;salva();renderOfficina();
+  document.getElementById('notaOff').innerHTML="<b>come si sbloccano</b>Corri in Arena. Ogni medaglia apre qualcosa."};
+let tv=0;
+function loopVetrina(){
+  requestAnimationFrame(loopVetrina);
+  if(modo!=="off")return;
+  tv+=16;
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const L=vet.clientWidth||150,H=L*1.05;
+  vet.width=L*dpr;vet.height=H*dpr;vx.setTransform(dpr,0,0,dpr,0,0);vx.clearRect(0,0,L,H);
+  const g=vx.createRadialGradient(L/2,H*.42,4,L/2,H*.42,L*.8);
+  g.addColorStop(0,"rgba(255,255,255,.10)");g.addColorStop(1,"rgba(255,255,255,0)");
+  vx.fillStyle=g;vx.fillRect(0,0,L,H);
+  vx.save();vx.globalAlpha=.35;vx.fillStyle="#000";
+  vx.beginPath();vx.ellipse(L/2,H*.78,L*.24,L*.075,0,0,7);vx.fill();vx.restore();
+  disegnaRobotSu(vx,L/2,H*.78+Math.sin(tv/620)*L*.02,L*.62,
+    {f:[1,2,3,0][Math.floor(tv/1400)%4],est:0,chiavi:0,tm:tv})}
+function disegnaRobotSu(ctx2,a,b,S,o){
+  const salvato=cx;cx=ctx2;try{robot(a,b,S,o)}finally{cx=salvato}}
+
+sbloccaTabs();renderOfficina();loopVetrina();
+vai(lv);requestAnimationFrame(loop);
+</script>
+</body>
+</html>
