@@ -1,0 +1,13 @@
+# Le prove del motore girano a ogni push: un livello rotto o una modifica
+# che cambia i replay si scoprono qui, non in mano ai giocatori.
+name: prove
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
