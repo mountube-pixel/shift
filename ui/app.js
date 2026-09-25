@@ -10,6 +10,7 @@ import {
 } from "./cursore.js";
 import { htmlProgramma } from "./blocchi.js";
 import { htmlPalette } from "./palette.js";
+import { creaScena } from "../render/scena.js";
 
 /* Livello provvisorio per provare ogni blocco: i livelli veri arrivano col
    punto 4 dell'ordine di lavoro, in /livelli. */
@@ -28,39 +29,62 @@ let cursore = null;
 let mappa = []; /* posizione k → {l, i}, nello stesso ordine dei data-k */
 
 const el = id => document.getElementById(id);
+const scena = creaScena(el("stage"));
 
 function render() {
   el("prog").innerHTML = htmlProgramma(prog, cursore);
   mappa = posizioni(prog);
 }
 
-/* Il verdetto racconta cosa farebbe il robot, ricalcolato a ogni tocco. */
+/* Il meccanismo cardine: a ogni tocco il motore riesegue tutto e la scena
+   ridisegna la linea tratteggiata; niente pulsanti intermedi. */
 function calcola() {
   const verdetto = el("verdetto");
+  const r = esegui(livello, prog);
+  scena.anteprima(r);
   const blocchi = contaBlocchi(prog);
-  let battiti = "–";
-  if (!prog.length) {
+  const battiti = prog.length ? battitiDi(r) : "–";
+  if (!prog.length || scena.inReplay()) {
     verdetto.textContent = "";
+  } else if (r.esito === "ok") {
+    verdetto.textContent = "la linea arriva alla bandiera · premi VAI";
+    verdetto.style.color = "#2ee39a";
   } else {
-    const r = esegui(livello, prog);
-    battiti = battitiDi(r);
     const urti = r.passi.reduce((a, p) => a + p.fx.filter(e => e.t === "urto").length, 0);
-    if (r.esito === "ok") {
-      verdetto.textContent = "arriva alla bandiera · " + battiti + " battiti";
-      verdetto.style.color = "#2ee39a";
-    } else {
-      verdetto.textContent =
-        r.esito === "lungo" ? "gira a vuoto: il programma non finisce mai" :
-        urti ? "sbatte " + urti + (urti === 1 ? " volta" : " volte") :
-        "si ferma prima della bandiera";
-      verdetto.style.color = "#ffd24a";
-    }
+    verdetto.textContent =
+      r.esito === "lungo" ? "gira a vuoto: il programma non finisce mai" :
+      urti ? "sbatte " + urti + (urti === 1 ? " volta" : " volte") :
+      "la linea si ferma prima";
+    verdetto.style.color = "#ffd24a";
   }
   el("contatori").innerHTML =
     `<div><b>${blocchi}</b>blocchi</div><div><b>${battiti}</b>battiti</div>`;
 }
 
 function tutto() { render(); calcola(); }
+
+/* Durante il replay il blocco in esecuzione si accende. */
+function evidenzia(id) {
+  document.querySelectorAll(".bl.ora").forEach(b => b.classList.remove("ora"));
+  if (id != null) {
+    const b = document.querySelector('.bl[data-id="' + id + '"]');
+    if (b) b.classList.add("ora");
+  }
+}
+
+el("vai").addEventListener("click", () => {
+  if (!prog.length) return;
+  el("verdetto").textContent = "";
+  scena.avvia(esegui(livello, prog), {
+    alPasso: evidenzia,
+    sottoOk: contaBlocchi(prog) + " blocchi",
+  });
+});
+
+el("ferma").addEventListener("click", () => {
+  scena.ferma();
+  calcola();
+});
 
 el("palette").addEventListener("click", e => {
   const b = e.target.closest("[data-add]");
@@ -111,4 +135,5 @@ el("prog").addEventListener("click", e => {
 el("lvNome").textContent = livello.nome;
 el("lvGoal").textContent = livello.goal;
 el("palette").innerHTML = htmlPalette(livello.blocchi);
+scena.livello(livello);
 tutto();

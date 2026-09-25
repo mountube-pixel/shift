@@ -32,11 +32,21 @@ body {
 
 /* ============ il campo (per ora un segnaposto: il canvas arriva col punto 3) */
 .schermo { border-radius: 16px; overflow: hidden; position: sticky; top: 8px; z-index: 30; background: #120d28; }
-#campo {
-  aspect-ratio: 1 / 0.62; max-height: 44vh; display: flex; align-items: center; justify-content: center;
-  background: linear-gradient(180deg, #171040, #3d1f66 55%, #a4456a);
+#stage { display: block; width: 100%; aspect-ratio: 1 / 0.8; max-height: 46vh; }
+.comandi { display: flex; gap: 7px; margin-top: 8px; }
+.comandi button {
+  font: inherit; font-weight: 900; font-size: 14px; border: 0; border-radius: 12px;
+  min-height: 48px; padding: 10px 14px; cursor: pointer;
 }
-#campo .attesa { color: rgba(255,255,255,.75); font-size: 13px; font-weight: 700; padding: 0 16px; text-align: center; }
+#vai {
+  flex: 1; background: linear-gradient(180deg, #38e89c, #0fb57a); color: #04180f;
+  box-shadow: 0 3px 0 rgba(8,118,81,.5);
+}
+#vai:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(8,118,81,.5); }
+.comandi .g {
+  background: transparent; color: var(--fg); border: 1.5px solid var(--line);
+  font-size: 16px; font-weight: 800; min-width: 56px;
+}
 .tit {
   position: absolute; left: 8px; right: 8px; top: 8px; background: rgba(10,8,25,.72);
   border-radius: 10px; padding: 6px 10px; color: #fff; font-size: 12.5px; font-weight: 700;
