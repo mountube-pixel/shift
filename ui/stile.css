@@ -12,11 +12,13 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
+    color-scheme: dark;
     --bg: #0d0f16; --fg: #eceaf2; --muted: #8e93a2; --line: #252836; --card: #161927;
     --mov: #4f92ff; --ctrl: #ffb93b; --tool: #ff6a50; --tu: #2ee39a; --code: #0a0c13;
   }
 }
 :root[data-theme="dark"] {
+  color-scheme: dark;
   --bg: #0d0f16; --fg: #eceaf2; --muted: #8e93a2; --line: #252836; --card: #161927;
   --mov: #4f92ff; --ctrl: #ffb93b; --tool: #ff6a50; --tu: #2ee39a; --code: #0a0c13;
 }
@@ -30,7 +32,7 @@ body {
 
 .wrap { max-width: 640px; margin: 0 auto; padding: 10px 16px 24px; }
 
-/* ============ il campo (per ora un segnaposto: il canvas arriva col punto 3) */
+/* ============ il campo */
 .schermo { border-radius: 16px; overflow: hidden; position: sticky; top: 8px; z-index: 30; background: #120d28; }
 #stage { display: block; width: 100%; aspect-ratio: 1 / 0.8; max-height: 46vh; }
 .comandi { display: flex; gap: 7px; margin-top: 8px; }

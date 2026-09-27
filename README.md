@@ -30,6 +30,17 @@ python3 -m http.server 8000 # poi apri http://localhost:8000 (su Windows: py -m 
 La pagina usa moduli JavaScript nativi, che il browser carica solo da un
 server: per questo serve il mini-server invece del doppio clic sul file.
 
+Per avere tutto in un file solo:
+
+```bash
+npm install                 # una volta sola: scarica lo strumento che cuce i moduli
+npm run file-unico          # scrive dist/percorso.html e dist/artefatto.html
+```
+
+`dist/percorso.html` si apre con un doppio clic, senza server, e si può mandare
+a chi vuole provarlo. `dist/artefatto.html` è la stessa pagina nella forma che
+serve per pubblicarla come artefatto su claude.ai.
+
 ## Regola d'oro
 
 Il motore è deterministico: stesso programma + stesso livello = stessa identica
