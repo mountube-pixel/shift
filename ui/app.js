@@ -1,7 +1,7 @@
 /* Il collante della pagina: stato, eventi, e il meccanismo cardine del
-   gioco. A OGNI modifica del programma il motore riesegue tutto e la pagina
-   risponde subito, senza pulsanti intermedi: per ora con verdetto e
-   contatori, dal punto 3 con la linea tratteggiata disegnata sul campo. */
+   gioco. A OGNI modifica del programma il motore riesegue tutto e la linea
+   tratteggiata si ridisegna, senza pulsanti intermedi. VAI apre il replay
+   a schermo intero, col programma in miniatura che scorre accanto. */
 
 import { esegui, battitiDi, contaBlocchi, SENSORI } from "../motore/indice.js";
 import {
@@ -10,6 +10,7 @@ import {
 } from "./cursore.js";
 import { htmlProgramma } from "./blocchi.js";
 import { htmlPalette } from "./palette.js";
+import { htmlTraccia, antenati, testoGiro } from "./traccia.js";
 import { creaScena } from "../render/scena.js";
 
 /* Livello provvisorio per provare ogni blocco: i livelli veri arrivano col
@@ -63,28 +64,91 @@ function calcola() {
 
 function tutto() { render(); calcola(); }
 
-/* Durante il replay il blocco in esecuzione si accende. */
-function evidenzia(id) {
-  document.querySelectorAll(".bl.ora").forEach(b => b.classList.remove("ora"));
-  if (id != null) {
-    const b = document.querySelector('.bl[data-id="' + id + '"]');
-    if (b) b.classList.add("ora");
-  }
+/* ================= il replay a schermo intero */
+const schermo = el("schermo");
+let contenitori = new Map(); /* blocco → blocchi che lo contengono */
+let comandiVisibili = true;
+
+const inPieno = () => schermo.classList.contains("pieno");
+
+function avviaReplay() {
+  if (!prog.length) return;
+  const r = esegui(livello, prog);
+  el("prScorri").innerHTML = htmlTraccia(prog);
+  el("prScorri").scrollTop = 0;
+  el("prBattiti").textContent = "battito 0";
+  contenitori = antenati(prog);
+  schermo.classList.remove("finito");
+  schermo.classList.toggle("senzaComandi", !comandiVisibili);
+  schermo.classList.add("pieno");
+  document.body.classList.add("inPieno");
+  aggiornaMargini(true);
+  scena.avvia(r, {
+    alPasso: passoReplay,
+    allaFine: () => schermo.classList.add("finito"),
+    sottoOk: battitiDi(r) + " battiti · " + contaBlocchi(prog) + " blocchi",
+  });
 }
 
-el("vai").addEventListener("click", () => {
-  if (!prog.length) return;
-  el("verdetto").textContent = "";
-  scena.avvia(esegui(livello, prog), {
-    alPasso: evidenzia,
-    sottoOk: contaBlocchi(prog) + " blocchi",
-  });
-});
-
-el("ferma").addEventListener("click", () => {
+function esciPieno() {
+  schermo.classList.remove("pieno", "finito");
+  document.body.classList.remove("inPieno");
   scena.ferma();
+  scena.margini({}, true);
   calcola();
+}
+
+/* Il campo si centra nello spazio che il pannello lascia libero. */
+function aggiornaMargini(subito = false) {
+  if (!inPieno() || !comandiVisibili) { scena.margini({}, subito); return; }
+  const pan = el("pannelloReplay").getBoundingClientRect();
+  const tutto = schermo.getBoundingClientRect();
+  if (pan.height > tutto.height * .6) scena.margini({ destra: tutto.right - pan.left }, subito);
+  else scena.margini({ basso: tutto.bottom - pan.top }, subito);
+}
+
+/* A ogni battito: acceso il blocco che lo produce, rischiarati quelli che
+   lo contengono, giri scritti sui cicli aperti, scossa rossa se sbatte. */
+function passoReplay(fotogramma, i) {
+  el("prBattiti").textContent = "battito " + i;
+  const cont = el("prScorri");
+  cont.querySelectorAll(".tr-bl.ora, .tr-bl.antenato").forEach(b => b.classList.remove("ora", "antenato"));
+  cont.querySelectorAll(".giro").forEach(g => { g.textContent = ""; });
+  for (const g of fotogramma.giri) {
+    const cartellino = cont.querySelector('.giro[data-giro="' + g.id + '"]');
+    if (cartellino) cartellino.textContent = testoGiro(g);
+  }
+  for (const id of contenitori.get(fotogramma.id) || []) {
+    const b = cont.querySelector('.tr-bl[data-tid="' + id + '"]');
+    if (b) b.classList.add("antenato");
+  }
+  const riga = cont.querySelector('.tr-bl[data-tid="' + fotogramma.id + '"]');
+  if (!riga) return;
+  riga.classList.add("ora");
+  if (fotogramma.fx.some(e => e.t === "urto")) {
+    riga.classList.remove("sbatte");
+    void riga.offsetWidth; /* fa ripartire l'animazione anche sullo stesso blocco */
+    riga.classList.add("sbatte");
+  }
+  cont.scrollTo({ top: riga.offsetTop - cont.clientHeight / 2 + riga.offsetHeight / 2, behavior: "smooth" });
+}
+
+el("vai").addEventListener("click", avviaReplay);
+el("rivedi").addEventListener("click", avviaReplay);
+el("tornaBlocchi").addEventListener("click", esciPieno);
+el("chiudiPieno").addEventListener("click", esciPieno);
+el("prNascondi").addEventListener("click", () => {
+  comandiVisibili = false;
+  schermo.classList.add("senzaComandi");
+  aggiornaMargini();
 });
+el("mostraComandi").addEventListener("click", () => {
+  comandiVisibili = true;
+  schermo.classList.remove("senzaComandi");
+  aggiornaMargini();
+});
+addEventListener("resize", () => aggiornaMargini());
+addEventListener("keydown", e => { if (e.key === "Escape" && inPieno()) esciPieno(); });
 
 el("palette").addEventListener("click", e => {
   const b = e.target.closest("[data-add]");

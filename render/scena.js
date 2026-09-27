@@ -23,20 +23,23 @@ export function creaScena(canvas, opzioni = {}) {
   let iA = 0, fA = 0;    /* fotogramma corrente e frazione (0..1) verso il prossimo */
   let giaFatti = new Set(); /* fotogrammi che hanno già sparato i loro effetti */
   let finale = null;     /* il titolo di vittoria o sconfitta */
+  let tenuto = null;     /* la cronaca appena finita: il robot resta sull'ultima casella durante la festa */
   let alPasso = () => {}, allaFine = () => {}, sottoOk = "";
+  /* spazio coperto dai pannelli (pixel CSS): il campo si centra nel resto */
+  const margini = { destra: 0, basso: 0 }, marginiMira = { destra: 0, basso: 0 };
   let ultimo = 0, vivo = true;
 
   function livello(nuovo) {
-    L = nuovo; anteprima = null; replay = null; finale = null;
+    L = nuovo; anteprima = null; replay = null; tenuto = null; finale = null;
   }
 
   function mostraAnteprima(r) {
     anteprima = r;
-    if (!replay) finale = null; /* una modifica spegne il titolo e ridà la linea */
+    if (!replay && !tenuto) finale = null; /* una modifica spegne il titolo e ridà la linea */
   }
 
   function avvia(r, o = {}) {
-    replay = r; iA = 0; fA = 0; giaFatti = new Set(); finale = null;
+    replay = r; tenuto = null; iA = 0; fA = 0; giaFatti = new Set(); finale = null;
     fx.part = []; fx.testi = []; fx.coriandoli = [];
     alPasso = o.alPasso || (() => {});
     allaFine = o.allaFine || (() => {});
@@ -44,14 +47,23 @@ export function creaScena(canvas, opzioni = {}) {
   }
 
   function ferma() {
-    replay = null; finale = null;
-    alPasso(null);
+    replay = null; tenuto = null; finale = null;
+    fx.part = []; fx.testi = []; fx.coriandoli = []; fx.lampo = null;
+  }
+
+  /* Il cambio di spazio scorre dolce (pannello nascosto, rotazione del
+     tablet), tranne quando serve subito, come all'ingresso nel replay. */
+  function impostaMargini(m = {}, subito = false) {
+    marginiMira.destra = m.destra || 0;
+    marginiMira.basso = m.basso || 0;
+    if (subito) Object.assign(margini, marginiMira);
   }
 
   /* Fine del replay: la festa o la doccia fredda (regole del brief §8). */
   function fine() {
     const r = replay;
     replay = null;
+    tenuto = r;
     if (r.esito === "ok") {
       fx.boom(p.Pf, L.band[0], L.band[1], 46, "#ffd24a", 4.4);
       setTimeout(() => { if (vivo) fx.boom(p.Pf, L.band[0], L.band[1], 28, "#2ee39a", 5); }, 140);
@@ -68,7 +80,6 @@ export function creaScena(canvas, opzioni = {}) {
         sotto: r.esito === "lungo" ? "il programma non finisce mai" : "finite le istruzioni",
       };
     }
-    alPasso(null);
     allaFine(r);
   }
 
@@ -101,12 +112,13 @@ export function creaScena(canvas, opzioni = {}) {
     cx.fillRect(0, 0, W, H);
     if (!L) return;
 
+    const Wu = Math.max(120, W - margini.destra), Hu = Math.max(120, H - margini.basso);
     const G = L.G, st = p.st;
-    st.TW = Math.min(W / (G + .8), (H - 46) / (G * .5 + 2.2));
+    st.TW = Math.min(Wu / (G + .8), (Hu - 46) / (G * .5 + 2.2));
     st.TH = st.TW / 2;
     st.ZU = st.TW * .62;
-    st.OX = W / 2;
-    st.OY = Math.max(H * .24, (H - G * st.TH) / 2 - st.TW * .4);
+    st.OX = Wu / 2;
+    st.OY = Math.max(Hu * .24, (Hu - G * st.TH) / 2 - st.TW * .4);
 
     cx.save();
     if (fx.shake > .2) cx.translate((Math.random() - .5) * fx.shake, (Math.random() - .5) * fx.shake);
@@ -120,10 +132,12 @@ export function creaScena(canvas, opzioni = {}) {
       p.tile(x, y, (x + y) % 2 ? "#3fae58" : "#379e4f", 0, true);
     (L.acqua || []).forEach(k => { const [x, y] = k.split(",").map(Number); acqua(p, x, y, tm); });
 
-    /* lo stato in mostra: il fotogramma del replay, o il primo dell'anteprima */
-    const s = replay ? replay.passi[Math.min(iA, replay.passi.length - 1)]
+    /* lo stato in mostra: il fotogramma del replay (o di quello appena
+       finito), altrimenti il primo dell'anteprima */
+    const vista = replay || tenuto;
+    const s = vista ? vista.passi[Math.min(iA, vista.passi.length - 1)]
       : anteprima ? anteprima.passi[0] : null;
-    const sp = replay ? replay.passi[Math.max(0, iA - 1)] : s;
+    const sp = vista ? vista.passi[Math.max(0, iA - 1)] : s;
     const fuochi = s ? s.fuoco : (L.fuoco || []);
     const porte = s ? s.porta : (L.porta || []);
     const estintori = s ? s.ogE : (L.est || []);
@@ -176,7 +190,7 @@ export function creaScena(canvas, opzioni = {}) {
       }
     }
 
-    if (!replay && anteprima) traccia(p, anteprima, tm);
+    if (!vista && anteprima) traccia(p, anteprima, tm);
 
     if (s) {
       const lerp = (a, b) => a + (b - a) * eo(fA);
@@ -203,26 +217,27 @@ export function creaScena(canvas, opzioni = {}) {
       const k = el < 1 ? 1 + (1 - eo(cl(el, 0, 1))) * 2.2 : 1 + Math.sin(tm / 420) * .03;
       const rot = ok ? Math.sin(tm / 520) * .03 : (el < 1 ? (1 - eo(cl(el, 0, 1))) * .35 : 0);
       cx.save();
-      cx.translate(W / 2, H * .44);
+      const dim = Math.round(Math.min(78, Wu * .11));
+      cx.translate(Wu / 2, Hu * .44);
       cx.rotate(rot);
       cx.scale(k, k);
       cx.textAlign = "center";
-      cx.font = "900 " + Math.round(Math.min(46, W * .13)) + "px sans-serif";
-      cx.lineWidth = 9;
+      cx.font = "900 " + dim + "px sans-serif";
+      cx.lineWidth = Math.max(5, dim * .12);
       cx.strokeStyle = "rgba(8,6,22,.85)";
       cx.strokeText(finale.titolo, 0, 0);
-      const g2 = cx.createLinearGradient(0, -30, 0, 16);
+      const g2 = cx.createLinearGradient(0, -dim * .65, 0, dim * .35);
       if (ok) { g2.addColorStop(0, "#b9ffe0"); g2.addColorStop(1, "#0fb57a"); }
       else { g2.addColorStop(0, "#ffc9c2"); g2.addColorStop(1, "#d63b2c"); }
       cx.fillStyle = g2;
       cx.fillText(finale.titolo, 0, 0);
       if (finale.sotto) {
-        cx.font = "800 " + Math.round(Math.min(17, W * .045)) + "px sans-serif";
+        cx.font = "800 " + Math.round(Math.max(12, Math.min(24, Wu * .034))) + "px sans-serif";
         cx.lineWidth = 5;
         cx.strokeStyle = "rgba(8,6,22,.8)";
-        cx.strokeText(finale.sotto, 0, 26);
+        cx.strokeText(finale.sotto, 0, dim * .62);
         cx.fillStyle = "#fff";
-        cx.fillText(finale.sotto, 0, 26);
+        cx.fillText(finale.sotto, 0, dim * .62);
       }
       cx.restore();
     }
@@ -234,11 +249,14 @@ export function creaScena(canvas, opzioni = {}) {
     const dt = Math.min(64, tm - (ultimo || tm)); /* delta time: mai a scatti */
     ultimo = tm;
     fx.passo(dt, canvas.clientHeight || 300);
+    const km = Math.min(1, dt / 140);
+    margini.destra += (marginiMira.destra - margini.destra) * km;
+    margini.basso += (marginiMira.basso - margini.basso) * km;
     if (replay) {
       fA += dt / 230;
       if (fA > .45 && !giaFatti.has(iA)) { giaFatti.add(iA); effettiDelPasso(); }
       while (fA >= 1 && replay) {
-        if (iA < replay.passi.length - 1) { iA++; fA -= 1; alPasso(replay.passi[iA].id); }
+        if (iA < replay.passi.length - 1) { iA++; fA -= 1; alPasso(replay.passi[iA], iA); }
         else { fA = 1; fine(); break; }
       }
     }
@@ -251,6 +269,7 @@ export function creaScena(canvas, opzioni = {}) {
     anteprima: mostraAnteprima,
     avvia,
     ferma,
+    margini: impostaMargini,
     inReplay: () => !!replay,
     distruggi() { vivo = false; },
   };

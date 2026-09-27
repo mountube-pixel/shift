@@ -10,14 +10,28 @@
 <body>
 <div class="wrap">
   <div class="colCampo">
-    <div class="schermo">
+    <div class="schermo" id="schermo">
       <canvas id="stage"></canvas>
       <div class="tit"><b id="lvNome"></b><span id="lvGoal"></span></div>
       <div class="verdetto" id="verdetto"></div>
+      <!-- da qui in giù: visibili solo nel replay a schermo intero -->
+      <button class="chiudiPieno" id="chiudiPieno" aria-label="torna ai blocchi">✕</button>
+      <div class="pannelloReplay" id="pannelloReplay">
+        <div class="pr-testa">
+          <span class="pr-titolo">comandi</span>
+          <span class="pr-battiti" id="prBattiti"></span>
+          <button class="pr-nascondi" id="prNascondi" aria-label="nascondi i comandi">✕</button>
+        </div>
+        <div class="pr-scorri" id="prScorri"></div>
+      </div>
+      <button class="mostraComandi" id="mostraComandi">📜 comandi</button>
+      <div class="fineReplay" id="fineReplay">
+        <button id="rivedi">↻ rivedi</button>
+        <button id="tornaBlocchi" class="primario">✎ torna ai blocchi</button>
+      </div>
     </div>
     <div class="comandi">
       <button id="vai">▶ VAI</button>
-      <button class="g" id="ferma" aria-label="da capo">↺</button>
     </div>
     <div class="contatori" id="contatori"></div>
   </div>
