@@ -15,27 +15,39 @@ export const LIMITI = {
 };
 
 /* Srotola il programma in una sequenza di richieste: {az} per un'azione,
-   {chiedi} per una condizione da valutare (la risposta arriva via next()). */
-function* passiDi(lista) {
+   {chiedi} per una condizione da valutare (la risposta arriva via next()).
+   pila tiene i cicli aperti, dal più esterno: ogni azione ne porta una
+   copia (giri), così il replay può mostrare «ripeti · giro 2/4». */
+function* passiDi(lista, pila) {
   for (const n of lista) {
     if (n.t === "ripeti") {
-      for (let i = 0; i < n.n; i++) yield* passiDi(n.body);
+      for (let i = 0; i < n.n; i++) {
+        pila.push({ id: n.id, giro: i + 1, di: n.n });
+        yield* passiDi(n.body, pila);
+        pila.pop();
+      }
     } else if (n.t === "sempre") {
       if (!n.body.length) continue;
       let g = 0;
-      while (g++ < LIMITI.sempre) yield* passiDi(n.body);
+      while (g++ < LIMITI.sempre) {
+        pila.push({ id: n.id, giro: g });
+        yield* passiDi(n.body, pila);
+        pila.pop();
+      }
     } else if (n.t === "finche") {
       /* ripete MENTRE il sensore è vero; la guardia si valuta prima di ogni giro */
       let g = 0;
       while (yield { chiedi: n, id: n.id }) {
         if (g++ > LIMITI.finche) break;
-        yield* passiDi(n.body);
+        pila.push({ id: n.id, giro: g });
+        yield* passiDi(n.body, pila);
+        pila.pop();
       }
     } else if (n.t === "se") {
       const v = yield { chiedi: n, id: n.id };
-      if (v) yield* passiDi(n.body);
-      else if (n.alt) yield* passiDi(n.alt);
-    } else yield { az: n.t, id: n.id };
+      if (v) yield* passiDi(n.body, pila);
+      else if (n.alt) yield* passiDi(n.alt, pila);
+    } else yield { az: n.t, id: n.id, giri: pila.map(g => ({ ...g })) };
   }
 }
 
@@ -43,6 +55,9 @@ function* passiDi(lista) {
    passi[0] è lo stato di partenza; ogni azione aggiunge un fotogramma, quindi
    i battiti sono passi.length-1: ogni azione eseguita costa un battito, anche
    un avanti che sbatte, un attrezzo usato a vuoto, un'attesa o la spia.
+   Ogni fotogramma porta il blocco che l'ha prodotto (id), l'azione (az), i
+   giri dei cicli che la contengono (giri), gli effetti (fx) e lo stato
+   completo di robot e mappa.
    esito: "ok" toccata la bandiera (l'esecuzione si ferma lì),
           "finito" programma terminato prima della bandiera,
           "lungo" superato il tetto di passi (gira a vuoto). */
@@ -100,8 +115,9 @@ export function esegui(L, programma, max = LIMITI.passi) {
 
   /* ogni fotogramma porta lo stato completo, così il replay può partire da
      qualunque punto; l'acqua non cambia mai, quindi resta sul livello */
-  const fotografa = (id, fx) => ({
-    x: me.x, y: me.y, f: me.f, id, fx,
+  const fotografa = (s, fx) => ({
+    x: me.x, y: me.y, f: me.f,
+    id: s ? s.id ?? null : null, az: s ? s.az : null, giri: s ? s.giri : [], fx,
     est: me.est, chiavi: me.chiavi, stivali: me.stivali, spia: me.spia,
     fuoco: [...m.fuoco], porta: [...m.porta],
     ogE: [...m.est], ogC: [...m.chiave], ogS: [...m.stivali],
@@ -109,7 +125,7 @@ export function esegui(L, programma, max = LIMITI.passi) {
 
   const cronaca = [fotografa(null, [])];
   let esito = null;
-  const it = passiDi(programma);
+  const it = passiDi(programma, []);
   let risposta;
   for (let k = 0; k < max; k++) {
     const r = it.next(risposta);
@@ -153,7 +169,7 @@ export function esegui(L, programma, max = LIMITI.passi) {
         if (m.stivali.has(c)) { m.stivali.delete(c); me.stivali = true; fx.push({ t: "presa", x: p.x, y: p.y, e: "🥾" }); }
       }
     }
-    cronaca.push(fotografa(s.id ?? null, fx));
+    cronaca.push(fotografa(s, fx));
     if (me.x === band.x && me.y === band.y) { esito = "ok"; break; }
   }
   if (!esito) esito = "lungo";
