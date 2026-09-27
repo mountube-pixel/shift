@@ -13,17 +13,22 @@ gioco di riferimento. Il codice del progetto ne riproduce la semantica.
 | Cartella | Contenuto |
 |---|---|
 | `/motore` | il modello puro del gioco: blocchi, sensori, interprete. Zero DOM, zero canvas |
-| `/test` | le prove del motore e, più avanti, di ogni livello |
-| `/livelli` | tutorial, arene e famiglie del laboratorio (in arrivo) |
-| `/ui` `/render` `/rete` `/app` | in arrivo, nell'ordine di lavoro del brief |
+| `/ui` | la pagina: editor a cursore, palette, programma in miniatura del replay |
+| `/render` | il campo isometrico su canvas, la linea tratteggiata, le particelle |
+| `/test` | le prove del motore e dei moduli puri della UI; più avanti, di ogni livello |
+| `/livelli` `/rete` `/app` | in arrivo, nell'ordine di lavoro del brief |
 
 `PRIVACY.md` viene prima del codice e vincola il modello dati.
 
 ## Comandi
 
 ```bash
-npm test    # esegue tutte le prove (serve Node 20 o più recente, nessuna dipendenza)
+npm test                    # esegue tutte le prove (Node 20 o più recente, nessuna dipendenza)
+python3 -m http.server 8000 # poi apri http://localhost:8000 (su Windows: py -m http.server 8000)
 ```
+
+La pagina usa moduli JavaScript nativi, che il browser carica solo da un
+server: per questo serve il mini-server invece del doppio clic sul file.
 
 ## Regola d'oro
 
