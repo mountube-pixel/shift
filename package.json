@@ -5,9 +5,13 @@
   "description": "Gioco per tablet che insegna la logica procedurale: scrivi il programma a blocchi, il robot lo esegue su un labirinto isometrico",
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "file-unico": "node strumenti/file-unico.mjs"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }
