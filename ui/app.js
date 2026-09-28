@@ -7,8 +7,9 @@ import { esegui, battitiDi, contaBlocchi, SENSORI } from "../motore/indice.js";
 import {
   posizioni, cursoreValido, inserisci, trova, rimuovi, dopo,
   ciclaRipetizioni, ciclaSensore, ciclaOperatore, commutaAltrimenti,
+  puoAndare, nonCambia, sposta, conSpostamento,
 } from "./cursore.js";
-import { htmlProgramma } from "./blocchi.js";
+import { htmlProgramma, NOMI } from "./blocchi.js";
 import { htmlPalette } from "./palette.js";
 import { htmlTraccia, antenati, testoGiro } from "./traccia.js";
 import { creaScena } from "../render/scena.js";
@@ -32,20 +33,38 @@ let mappa = []; /* posizione k → {l, i}, nello stesso ordine dei data-k */
 const el = id => document.getElementById(id);
 const scena = creaScena(el("stage"));
 
+let inMano = null;       /* il blocco preso con un tocco sulla maniglia */
+let trascina = null;     /* il trascinamento in corso */
+let ignoraClickFino = 0; /* il click che segue un trascinamento non deve fare altro */
+
+/* Le fessure (numeri k) dove il blocco può andare; tutte=false toglie le
+   due attaccate a lui, dove lasciarlo non cambierebbe niente. */
+function bersagliDi(id, tutte) {
+  const k = new Set();
+  posizioni(prog).forEach((p, i) => {
+    if (puoAndare(prog, id, p) && (tutte || !nonCambia(prog, id, p))) k.add(i);
+  });
+  return k;
+}
+
 function render() {
-  el("prog").innerHTML = htmlProgramma(prog, cursore);
+  const avviso = inMano == null ? "" :
+    `<div class="avvisoSposta"><span>Tocca una fessura verde: il blocco va lì.</span><button>annulla</button></div>`;
+  const bersagli = inMano == null ? null : bersagliDi(inMano, false);
+  el("prog").innerHTML = avviso + htmlProgramma(prog, cursore, { inMano, bersagli });
   mappa = posizioni(prog);
 }
 
 /* Il meccanismo cardine: a ogni tocco il motore riesegue tutto e la scena
-   ridisegna la linea tratteggiata; niente pulsanti intermedi. */
-function calcola() {
+   ridisegna la linea tratteggiata; niente pulsanti intermedi. Durante un
+   trascinamento riceve il programma come sarebbe col blocco lasciato lì. */
+function calcola(programma = prog) {
   const verdetto = el("verdetto");
-  const r = esegui(livello, prog);
+  const r = esegui(livello, programma);
   scena.anteprima(r);
-  const blocchi = contaBlocchi(prog);
-  const battiti = prog.length ? battitiDi(r) : "–";
-  if (!prog.length || scena.inReplay()) {
+  const blocchi = contaBlocchi(programma);
+  const battiti = programma.length ? battitiDi(r) : "–";
+  if (!programma.length || scena.inReplay()) {
     verdetto.textContent = "";
   } else if (r.esito === "ok") {
     verdetto.textContent = "la linea arriva alla bandiera · premi VAI";
@@ -73,6 +92,7 @@ const inPieno = () => schermo.classList.contains("pieno");
 
 function avviaReplay() {
   if (!prog.length) return;
+  if (inMano != null) { inMano = null; render(); }
   const r = esegui(livello, prog);
   el("prScorri").innerHTML = htmlTraccia(prog);
   el("prScorri").scrollTop = 0;
@@ -148,16 +168,38 @@ el("mostraComandi").addEventListener("click", () => {
   aggiornaMargini();
 });
 addEventListener("resize", () => aggiornaMargini());
-addEventListener("keydown", e => { if (e.key === "Escape" && inPieno()) esciPieno(); });
+addEventListener("keydown", e => {
+  if (e.key !== "Escape") return;
+  if (inPieno()) esciPieno();
+  else if (inMano != null) { inMano = null; render(); }
+});
 
 el("palette").addEventListener("click", e => {
   const b = e.target.closest("[data-add]");
   if (!b) return;
+  inMano = null;
   cursore = inserisci(prog, cursore, b.dataset.add);
   tutto();
 });
 
 el("prog").addEventListener("click", e => {
+  if (performance.now() < ignoraClickFino) return;
+  const maniglia = e.target.closest("[data-presa]");
+  if (maniglia) {
+    const id = +maniglia.dataset.presa;
+    inMano = inMano === id ? null : id;
+    render();
+    return;
+  }
+  /* con un blocco in mano, il tocco dopo lo sposta o annulla */
+  if (inMano != null) {
+    const fessura = e.target.closest(".slot.bersaglio");
+    const dest = fessura && mappa[+fessura.dataset.k];
+    const dopoMossa = dest && sposta(prog, inMano, dest);
+    inMano = null;
+    if (dopoMossa) { cursore = dopoMossa; tutto(); } else render();
+    return;
+  }
   const val = e.target.closest("[data-cicla]");
   if (val) {
     const n = trova(prog, +val.dataset.id);
@@ -195,6 +237,136 @@ el("prog").addEventListener("click", e => {
     render();
   }
 });
+
+/* ================= trascinare la maniglia
+   Un solo codice per dito, mouse e penna (pointer events). Finché il dito
+   non si muove di qualche pixel è un tocco, e ci pensa il click; poi il
+   blocco si solleva, un fantasma lo segue, la fessura più vicina si accende
+   e la linea tratteggiata mostra già il programma con il blocco lì. */
+el("prog").addEventListener("pointerdown", e => {
+  const maniglia = e.target.closest("[data-presa]");
+  if (!maniglia || e.button > 0 || trascina) return;
+  e.preventDefault(); /* niente selezione di testo col mouse */
+  trascina = {
+    id: +maniglia.dataset.presa, pid: e.pointerId,
+    x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, attivo: false, k: null,
+  };
+  maniglia.setPointerCapture(e.pointerId);
+});
+
+el("prog").addEventListener("pointermove", e => {
+  if (!trascina || e.pointerId !== trascina.pid) return;
+  trascina.x = e.clientX;
+  trascina.y = e.clientY;
+  if (!trascina.attivo) {
+    if (Math.hypot(e.clientX - trascina.x0, e.clientY - trascina.y0) < 8) return;
+    iniziaTrascinamento();
+  }
+  muoviFantasma();
+  scegliApprodo();
+});
+
+el("prog").addEventListener("pointerup", e => {
+  if (!trascina || e.pointerId !== trascina.pid) return;
+  const t = trascina;
+  trascina = null;
+  if (!t.attivo) return;
+  ignoraClickFino = performance.now() + 400;
+  chiudiTrascinamento(t);
+  const dest = t.k == null ? null : mappa[t.k];
+  const dopoMossa = dest && sposta(prog, t.id, dest);
+  if (dopoMossa) cursore = dopoMossa;
+  tutto();
+});
+
+el("prog").addEventListener("pointercancel", e => {
+  if (!trascina || e.pointerId !== trascina.pid) return;
+  const t = trascina;
+  trascina = null;
+  if (t.attivo) { chiudiTrascinamento(t); calcola(); }
+});
+
+function iniziaTrascinamento() {
+  const t = trascina;
+  t.attivo = true;
+  if (inMano != null) { /* un tocco di prima aveva preso un blocco: vale il gesto nuovo */
+    inMano = null;
+    el("prog").querySelectorAll(".inMano").forEach(b => b.classList.remove("inMano"));
+    el("prog").querySelectorAll(".bersaglio").forEach(b => b.classList.remove("bersaglio"));
+    el("prog").querySelector(".avvisoSposta")?.remove();
+  }
+  document.body.classList.add("trascinando");
+  const validi = bersagliDi(t.id, true);
+  t.fessure = [...el("prog").querySelectorAll(".slot")].filter(f => validi.has(+f.dataset.k));
+  t.gruppo = el("prog").querySelector('[data-gid="' + t.id + '"]');
+  t.gruppo?.classList.add("sollevato");
+  const nodo = trova(prog, t.id);
+  const [ic, nome, cat] = NOMI[nodo.t];
+  t.fantasma = document.createElement("div");
+  t.fantasma.className = "fantasma " + cat + (contaBlocchi([nodo]) > 1 ? " conFigli" : "");
+  t.fantasma.textContent = ic + " " + nome;
+  document.body.appendChild(t.fantasma);
+  t.raf = requestAnimationFrame(autoScorri);
+}
+
+/* il fantasma sta un po' sopra il dito, che altrimenti lo coprirebbe */
+function muoviFantasma() {
+  trascina.fantasma.style.transform = `translate(${trascina.x + 14}px, ${trascina.y - 30}px) rotate(-2deg)`;
+}
+
+/* La fessura valida più vicina al dito; nessuna se il dito esce dal programma. */
+function scegliApprodo() {
+  const t = trascina;
+  const area = el("prog").getBoundingClientRect();
+  const fuori = t.x < area.left - 40 || t.x > area.right + 40 || t.y < area.top - 60 || t.y > area.bottom + 60;
+  let migliore = null, distanza = Infinity;
+  if (!fuori) for (const f of t.fessure) {
+    const r = f.getBoundingClientRect();
+    const d = Math.abs(t.y - (r.top + r.height / 2));
+    if (d < distanza) { distanza = d; migliore = f; }
+  }
+  const k = migliore ? +migliore.dataset.k : null;
+  if (k === t.k) return;
+  t.approdo?.classList.remove("approdo");
+  migliore?.classList.add("approdo");
+  t.approdo = migliore;
+  t.k = k;
+  calcola(k == null ? prog : conSpostamento(prog, t.id, k) || prog);
+}
+
+function chiudiTrascinamento(t) {
+  cancelAnimationFrame(t.raf);
+  t.fantasma?.remove();
+  t.gruppo?.classList.remove("sollevato");
+  t.approdo?.classList.remove("approdo");
+  document.body.classList.remove("trascinando");
+}
+
+/* Vicino al bordo della fascia visibile la pagina scorre da sola, così un
+   blocco può viaggiare anche in un programma lungo. */
+function autoScorri() {
+  const t = trascina;
+  if (!t || !t.attivo) return;
+  const { alto, basso } = zonaVisibile(), bordo = 56;
+  let v = 0;
+  if (t.y < alto + bordo) v = -Math.min(18, Math.ceil((alto + bordo - t.y) / 5));
+  else if (t.y > basso - bordo) v = Math.min(18, Math.ceil((t.y - basso + bordo) / 5));
+  if (v) { scrollBy(0, v); scegliApprodo(); }
+  t.raf = requestAnimationFrame(autoScorri);
+}
+
+/* La fascia dove si vede il programma: sotto il campo quando il campo gli
+   sta sopra (tablet in verticale), sopra la palette appiccicata in basso. */
+function zonaVisibile() {
+  const p = el("prog").getBoundingClientRect();
+  const sopra = r => r.left < p.right && r.right > p.left;
+  const campo = el("schermo").getBoundingClientRect();
+  const palette = el("palette").getBoundingClientRect();
+  return {
+    alto: sopra(campo) ? Math.max(0, campo.bottom) : 0,
+    basso: sopra(palette) ? Math.min(innerHeight, palette.top) : innerHeight,
+  };
+}
 
 el("lvNome").textContent = livello.nome;
 el("lvGoal").textContent = livello.goal;

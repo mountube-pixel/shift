@@ -234,3 +234,48 @@ body.inPieno .colCampo { z-index: 200; }
   }
   .schermo.senzaComandi .fineReplay { bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
 }
+
+/* ============ spostare i blocchi
+   La maniglia a puntini sposta il blocco: trascinandola (scorciatoia) o
+   toccandola e poi toccando una fessura verde. Solo la maniglia blocca lo
+   scorrimento della pagina (touch-action: none): un dito altrove sul
+   blocco scorre come sempre. */
+.bl .presa {
+  flex: none; position: relative; width: 44px; min-height: 44px; margin-left: -4px;
+  border: 0; border-radius: 10px; background: rgba(0,0,0,.16); cursor: grab; touch-action: none;
+}
+.bl .presa::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 12px; height: 18px; transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,255,255,.92) 1.7px, transparent 2.1px) 0 0 / 6px 6px;
+}
+.bl .presa:focus-visible { outline: 3px solid #fff; outline-offset: -3px; }
+
+.gruppo.inMano > .bl:first-child, .bl.inMano { outline: 3px dashed var(--fg); outline-offset: 3px; }
+.slot.bersaglio::after {
+  height: 7px; opacity: .85;
+  background: repeating-linear-gradient(90deg, var(--tu) 0 12px, transparent 12px 20px);
+}
+.slot.approdo::after { background: var(--tu); height: 10px; box-shadow: 0 0 16px var(--tu); opacity: 1; }
+/* mentre si trascina, l'unica fessura accesa è quella d'arrivo */
+body.trascinando .slot.attivo:not(.approdo)::after { background: transparent; box-shadow: none; }
+.sollevato { opacity: .35; }
+
+.avvisoSposta {
+  display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; padding: 2px 2px 2px 12px;
+  border-radius: 12px; background: rgba(46,227,154,.16); font-size: 13px; font-weight: 800;
+}
+.avvisoSposta span { flex: 1; }
+.avvisoSposta button {
+  min-height: 44px; padding: 0 14px; border: 0; border-radius: 10px; cursor: pointer;
+  background: var(--card); color: var(--fg); font: inherit; font-weight: 900;
+}
+
+.fantasma {
+  position: fixed; left: 0; top: 0; z-index: 150; pointer-events: none;
+  display: flex; align-items: center; gap: 8px; padding: 12px 16px; border-radius: 12px;
+  color: #fff; font-weight: 900; font-size: 14.5px; white-space: nowrap;
+  box-shadow: 0 12px 28px rgba(0,0,0,.35);
+}
+.fantasma.m { background: var(--mov); } .fantasma.c { background: var(--ctrl); } .fantasma.u { background: var(--tool); }
+.fantasma.conFigli { box-shadow: 7px 7px 0 -2px rgba(0,0,0,.28), 0 12px 28px rgba(0,0,0,.35); }
+body.trascinando, body.trascinando * { cursor: grabbing !important; -webkit-user-select: none; user-select: none; }
