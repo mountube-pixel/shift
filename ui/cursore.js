@@ -1,6 +1,7 @@
 /* Il cursore di inserimento: la prima regola dell'interfaccia.
-   Niente trascinamento: si tocca una fessura per dire DOVE, un blocco della
-   palette per dire COSA, e il blocco compare lì. Questo modulo è puro (zero
+   Si tocca una fessura per dire DOVE, un blocco della palette per dire COSA,
+   e il blocco compare lì. Il trascinamento esiste solo come scorciatoia per
+   spostare, mai come unico modo di fare qualcosa. Questo modulo è puro (zero
    DOM): la vista disegna le fessure nell'ordine di posizioni() e riferisce
    qui ogni tocco. */
 
@@ -108,4 +109,68 @@ export function ciclaOperatore(nodo) {
 /* Il ramo «altrimenti» di un se compare e scompare con un tocco. */
 export function commutaAltrimenti(nodo) {
   nodo.alt = nodo.alt ? null : [];
+}
+
+/* ================= spostare un blocco già nel programma
+   Due strade arrivano allo stesso punto: trascinare la maniglia (la
+   scorciatoia) oppure toccarla e poi toccare una fessura (la strada che
+   funziona sempre, anche per chi non riesce a trascinare). */
+
+/* Dove sta un blocco: la lista che lo contiene e il suo indice. */
+export function dove(prog, id) {
+  for (let i = 0; i < prog.length; i++) {
+    if (prog[i].id === id) return { l: prog, i };
+    for (const figli of [prog[i].body, prog[i].alt]) {
+      if (!figli) continue;
+      const r = dove(figli, id);
+      if (r) return r;
+    }
+  }
+  return null;
+}
+
+/* Le liste che stanno dentro un blocco, a qualunque profondità. */
+function listeDentro(nodo, out = new Set()) {
+  for (const figli of [nodo.body, nodo.alt]) {
+    if (!figli) continue;
+    out.add(figli);
+    figli.forEach(f => listeDentro(f, out));
+  }
+  return out;
+}
+
+/* Un blocco può andare in ogni fessura del programma tranne quelle che
+   stanno dentro di lui: finirebbe dentro se stesso. */
+export function puoAndare(prog, id, dest) {
+  const da = dove(prog, id);
+  if (!da || !cursoreValido(prog, dest)) return false;
+  return !listeDentro(da.l[da.i]).has(dest.l);
+}
+
+/* Le due fessure attaccate al blocco, subito prima e subito dopo:
+   lasciarlo lì non cambia niente. */
+export function nonCambia(prog, id, dest) {
+  const da = dove(prog, id);
+  return !!da && dest.l === da.l && (dest.i === da.i || dest.i === da.i + 1);
+}
+
+/* Sposta il blocco (con tutto ciò che contiene) nella fessura dest e
+   ritorna la fessura subito dopo di lui, dove va il cursore; null se lì
+   non può andare. */
+export function sposta(prog, id, dest) {
+  if (!puoAndare(prog, id, dest)) return null;
+  const da = dove(prog, id);
+  const [nodo] = da.l.splice(da.i, 1);
+  const i = dest.l === da.l && dest.i > da.i ? dest.i - 1 : dest.i;
+  dest.l.splice(i, 0, nodo);
+  return { l: dest.l, i: i + 1 };
+}
+
+/* Il programma come diventerebbe con il blocco nella fessura numero k
+   (l'ordine di posizioni). Lavora su una copia: mentre si trascina, la
+   linea tratteggiata mostra l'effetto prima di lasciare il blocco. */
+export function conSpostamento(prog, id, k) {
+  const copia = JSON.parse(JSON.stringify(prog));
+  const dest = posizioni(copia)[k];
+  return dest && sposta(copia, id, dest) ? copia : null;
 }

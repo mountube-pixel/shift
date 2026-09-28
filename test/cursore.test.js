@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   conId, posizioni, cursoreValido, inserisci, trova, rimuovi, dopo,
   ciclaRipetizioni, ciclaSensore, ciclaOperatore, commutaAltrimenti, CICLO_RIPETI,
+  dove, puoAndare, nonCambia, sposta, conSpostamento,
 } from "../ui/cursore.js";
 
 test("senza cursore il blocco va in coda e il cursore avanza", () => {
@@ -112,4 +113,73 @@ test("altrimenti compare e scompare con un tocco", () => {
   assert.deepEqual(se.alt, []);
   commutaAltrimenti(se);
   assert.equal(se.alt, null);
+});
+
+/* ================= spostare un blocco */
+
+/* Costruisce un programma coi blocchi dati, tutti con un id. */
+const programma = (...blocchi) => blocchi.map(conId);
+const tipi = l => l.map(b => b.t);
+
+test("sposta un blocco più avanti e più indietro nella stessa lista", () => {
+  const prog = programma({ t: "avanti" }, { t: "dx" }, { t: "sx" });
+  const [av, , sx] = prog;
+  sposta(prog, av.id, { l: prog, i: 3 });          /* in fondo */
+  assert.deepEqual(tipi(prog), ["dx", "sx", "avanti"]);
+  assert.deepEqual(dove(prog, av.id), { l: prog, i: 2 });
+  sposta(prog, sx.id, { l: prog, i: 0 });          /* in testa */
+  assert.deepEqual(tipi(prog), ["sx", "dx", "avanti"]);
+});
+
+test("sposta dentro un ripeti e poi di nuovo fuori", () => {
+  const prog = programma({ t: "avanti" }, { t: "ripeti", n: 3, body: [] });
+  const [av, rip] = prog;
+  const c = sposta(prog, av.id, { l: rip.body, i: 0 });
+  assert.deepEqual(tipi(prog), ["ripeti"]);
+  assert.deepEqual(tipi(rip.body), ["avanti"]);
+  assert.deepEqual(c, { l: rip.body, i: 1 });       /* il cursore va subito dopo */
+  sposta(prog, av.id, { l: prog, i: 1 });
+  assert.deepEqual(tipi(prog), ["ripeti", "avanti"]);
+  assert.equal(rip.body.length, 0);
+});
+
+test("un blocco con dei figli si sposta insieme a tutto quello che contiene", () => {
+  const prog = programma({ t: "dx" }, { t: "ripeti", n: 2, body: [{ t: "avanti" }, { t: "sx" }] });
+  const rip = prog[1];
+  sposta(prog, rip.id, { l: prog, i: 0 });
+  assert.deepEqual(tipi(prog), ["ripeti", "dx"]);
+  assert.deepEqual(tipi(prog[0].body), ["avanti", "sx"]);
+  assert.equal(prog[0], rip);                       /* lo stesso blocco, stessi id */
+});
+
+test("un blocco non può finire dentro se stesso né dentro un suo figlio", () => {
+  const prog = programma({ t: "sempre", body: [{ t: "se", c: "libero", op: "base", c2: "libero", body: [], alt: [] }] });
+  const sempre = prog[0], se = sempre.body[0];
+  assert.equal(puoAndare(prog, sempre.id, { l: sempre.body, i: 0 }), false);
+  assert.equal(puoAndare(prog, sempre.id, { l: se.alt, i: 0 }), false);
+  assert.equal(sposta(prog, sempre.id, { l: se.body, i: 0 }), null);
+  assert.deepEqual(tipi(prog), ["sempre"]);          /* niente è cambiato */
+  assert.equal(puoAndare(prog, se.id, { l: prog, i: 1 }), true); /* il figlio può uscire */
+});
+
+test("le fessure subito prima e subito dopo un blocco lo lasciano dov'è", () => {
+  const prog = programma({ t: "avanti" }, { t: "dx" }, { t: "sx" });
+  const dx = prog[1];
+  assert.equal(nonCambia(prog, dx.id, { l: prog, i: 1 }), true);
+  assert.equal(nonCambia(prog, dx.id, { l: prog, i: 2 }), true);
+  assert.equal(nonCambia(prog, dx.id, { l: prog, i: 3 }), false);
+  sposta(prog, dx.id, { l: prog, i: 2 });
+  assert.deepEqual(tipi(prog), ["avanti", "dx", "sx"]);
+});
+
+test("conSpostamento prova lo spostamento su una copia e lascia stare il programma vero", () => {
+  const prog = programma({ t: "avanti" }, { t: "ripeti", n: 2, body: [] });
+  const prima = JSON.stringify(prog);
+  const k = posizioni(prog).findIndex(p => p.l === prog[1].body); /* dentro il ripeti */
+  const copia = conSpostamento(prog, prog[0].id, k);
+  assert.deepEqual(tipi(copia), ["ripeti"]);
+  assert.deepEqual(tipi(copia[0].body), ["avanti"]);
+  assert.equal(JSON.stringify(prog), prima);
+  const dentroSe = posizioni(prog).findIndex(p => p.l === prog[1].body);
+  assert.equal(conSpostamento(prog, prog[1].id, dentroSe), null); /* il ripeti in se stesso: no */
 });
